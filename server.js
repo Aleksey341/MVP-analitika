@@ -1080,10 +1080,37 @@ if (process.env.NODE_ENV !== 'production') {
 // Все не-API роуты отдают React SPA
 app.get('*', (req, res) => {
   const indexPath = path.join(__dirname, 'frontend', 'dist', 'index.html');
+  console.log(`[SPA Fallback] Request: ${req.method} ${req.path}`);
+  console.log(`[SPA Fallback] Looking for index.html at: ${indexPath}`);
+
+  // Check if file exists
+  const fs = require('fs');
+  if (!fs.existsSync(indexPath)) {
+    console.error(`[SPA Fallback] index.html NOT FOUND at ${indexPath}`);
+    console.error(`[SPA Fallback] Directory listing:`);
+    try {
+      const distPath = path.join(__dirname, 'frontend', 'dist');
+      if (fs.existsSync(distPath)) {
+        console.error(fs.readdirSync(distPath));
+      } else {
+        console.error('frontend/dist directory does not exist!');
+      }
+    } catch (e) {
+      console.error('Error listing directory:', e.message);
+    }
+    return res.status(404).send(`
+      <h1>React app not built</h1>
+      <p>The frontend was not compiled. Run: <code>npm run build</code></p>
+      <p>Looking for: ${indexPath}</p>
+    `);
+  }
+
   res.sendFile(indexPath, (err) => {
     if (err) {
       console.error('Failed to send index.html:', err);
-      res.status(404).send('React app not built. Run: npm run build');
+      res.status(404).send('Error serving React app');
+    } else {
+      console.log('[SPA Fallback] Successfully served index.html');
     }
   });
 });
