@@ -1039,13 +1039,6 @@ app.post('/api/reports/save', requireAuth, requireMunicipalityAccess, async (req
   }
 });
 
-/* ==================== Страницы ==================== */
-app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.get('/form', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'form.html')));
-app.get('/gibdd', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'gibdd.html')));
-app.get('/dashboard', requireAuth, requireAdmin, (_req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
-app.get('/admin', requireAuth, requireAdmin, (_req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
-
 /* ==================== Health ==================== */
 app.get('/health', async (_req, res) => {
   try {
@@ -1083,8 +1076,19 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+/* ==================== SPA Fallback для React ==================== */
+// Все не-API роуты отдают React SPA
+app.get('*', (req, res) => {
+  const indexPath = path.join(__dirname, 'frontend', 'dist', 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Failed to send index.html:', err);
+      res.status(404).send('React app not built. Run: npm run build');
+    }
+  });
+});
+
 /* ==================== Ошибки ==================== */
-app.use((_req, res) => res.status(404).json({ error: 'Страница не найдена' }));
 app.use((err, _req, res, _next) => {
   console.error('Global error handler:', err);
   const isDev = process.env.NODE_ENV !== 'production';
@@ -1102,22 +1106,6 @@ const shutdown = async (signal) => {
 };
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
-
-/* ---------- SPA Fallback: все остальные GET запросы → React ---------- */
-app.get('*', (req, res) => {
-  // Skip API routes
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API endpoint not found' });
-  }
-
-  const indexPath = path.join(__dirname, 'frontend', 'dist', 'index.html');
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      console.error('Failed to send index.html:', err);
-      res.status(404).send('React app not built. Run: npm run build');
-    }
-  });
-});
 
 /* ---------- Отладка: печать всех роутов ---------- */
 function printRoutes() {
