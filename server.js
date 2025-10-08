@@ -19,6 +19,11 @@ const app = express();
 app.set('trust proxy', 1);
 const PORT = Number(process.env.PORT || 80);
 
+/* ---------- Super simple test endpoint ---------- */
+app.get('/ping', (_req, res) => {
+  res.send('PONG from mvp-analitika server!');
+});
+
 /* ---------- Безопасность ---------- */
 app.use(
   helmet({
