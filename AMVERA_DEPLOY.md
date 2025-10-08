@@ -12,13 +12,13 @@
 
 #### 2. Настройки сборки
 ```
-Build Command: bash build.sh
+Build Command: npm install
 Start Command: npm start
 Root Directory: /
 Port: 80
 ```
 
-**Важно:** Используйте `bash build.sh` в качестве Build Command, чтобы автоматически собрать React frontend.
+**Важно:** Frontend собирается автоматически через postinstall hook при выполнении `npm install`.
 
 #### 3. Environment Variables
 ```bash

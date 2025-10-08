@@ -14,7 +14,7 @@
     "db:clear": "node scripts/clear-test-data.js",
     "seed": "node seed.js",
     "create-admin": "node scripts/create-admin.js",
-    "postinstall": "npm run build || echo 'Frontend build failed, but continuing...'"
+    "postinstall": "cd frontend && npm install && npm run build && cd .. || echo 'Frontend build failed'"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
