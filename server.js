@@ -17,7 +17,7 @@ const { requireAuth, requireAdmin, requireMunicipalityAccess } = require('./midd
 
 const app = express();
 app.set('trust proxy', 1);
-const PORT = Number(process.env.PORT || 80);
+const PORT = Number(process.env.PORT || 8080);
 
 /* ---------- Super simple test endpoint ---------- */
 app.get('/ping', (_req, res) => {

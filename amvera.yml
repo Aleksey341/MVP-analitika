@@ -9,4 +9,4 @@ build:
 
 run:
   command: npm start
-  port: 80
+  port: 8080
