@@ -1070,19 +1070,43 @@ app.get('/health', async (_req, res) => {
   }
 });
 
-/* ==================== Debug endpoint (only for dev) ==================== */
-if (process.env.NODE_ENV !== 'production') {
-  app.get('/api/debug/routes', (_req, res) => {
-    const routes = [];
-    app._router.stack.forEach((middleware) => {
-      if (middleware.route) {
-        const methods = Object.keys(middleware.route.methods).join(',').toUpperCase();
-        routes.push({ method: methods, path: middleware.route.path });
-      }
-    });
-    res.json({ routes, db_mapping: DB });
+/* ==================== Debug endpoint ==================== */
+app.get('/api/debug/routes', (_req, res) => {
+  const routes = [];
+  app._router.stack.forEach((middleware) => {
+    if (middleware.route) {
+      const methods = Object.keys(middleware.route.methods).join(',').toUpperCase();
+      routes.push({ method: methods, path: middleware.route.path });
+    }
   });
-}
+  res.json({ routes, db_mapping: DB });
+});
+
+app.get('/api/debug/frontend', (_req, res) => {
+  const fs = require('fs');
+  const frontendDistPath = path.join(__dirname, 'frontend', 'dist');
+  const indexPath = path.join(frontendDistPath, 'index.html');
+
+  let distContents = [];
+  try {
+    if (fs.existsSync(frontendDistPath)) {
+      distContents = fs.readdirSync(frontendDistPath);
+    }
+  } catch (e) {
+    distContents = ['Error: ' + e.message];
+  }
+
+  res.json({
+    __dirname,
+    frontendDistPath,
+    indexPath,
+    distExists: fs.existsSync(frontendDistPath),
+    indexExists: fs.existsSync(indexPath),
+    distContents,
+    nodeVersion: process.version,
+    cwd: process.cwd()
+  });
+});
 
 /* ==================== SPA Fallback для React ==================== */
 // Все не-API роуты отдают React SPA
