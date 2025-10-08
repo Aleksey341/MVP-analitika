@@ -1044,11 +1044,19 @@ app.get('/health', async (_req, res) => {
   try {
     await pool.query('SELECT 1');
     await poolRO.query('SELECT 1');
+
+    // Check if frontend is built
+    const fs = require('fs');
+    const frontendPath = path.join(__dirname, 'frontend', 'dist', 'index.html');
+    const frontendBuilt = fs.existsSync(frontendPath);
+
     res.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
       database: 'connected',
-      version: process.env.npm_package_version || '1.0.0',
+      version: '1.1.3-spa-debug',
+      frontend_built: frontendBuilt,
+      frontend_path: frontendPath,
       db_mapping: {
         indicatorsCatalog: DB.indicatorsCatalog,
         indicatorValues: DB.indicatorValues,
