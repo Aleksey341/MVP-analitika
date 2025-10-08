@@ -1,21 +1,12 @@
 meta:
-  environment: node18
+  environment: node
+  toolchain:
+    name: npm
+    version: 18
 
 build:
-  commands:
-    - rm -rf node_modules package-lock.json || true
-    - npm install
+  command: npm install
 
 run:
   command: npm start
-
-port: 80
-
-healthcheck:
-  path: /health
-  interval: 30
-  timeout: 10
-
-scaling:
-  min_replicas: 1
-  max_replicas: 3
+  port: 80
