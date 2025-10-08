@@ -4,16 +4,46 @@ const { Pool } = require('pg');
 
 const bool = v => ['1', 'true', 'yes', 'on'].includes(String(v || '').toLowerCase());
 
+// Parse DATABASE_URL if provided (Amvera support)
+let parsedConfig = {};
+if (process.env.DATABASE_URL) {
+  try {
+    const url = new URL(process.env.DATABASE_URL);
+    parsedConfig.host = url.hostname;
+    parsedConfig.port = parseInt(url.port) || 5432;
+    parsedConfig.database = url.pathname.slice(1);
+    parsedConfig.user = url.username;
+    parsedConfig.password = url.password;
+    console.log(`[DB] Using DATABASE_URL: ${url.hostname}:${url.port}/${url.pathname.slice(1)}`);
+  } catch (e) {
+    console.error('[DB] Failed to parse DATABASE_URL:', e.message);
+  }
+}
+
+let parsedConfigRO = {};
+if (process.env.DATABASE_URL_RO) {
+  try {
+    const url = new URL(process.env.DATABASE_URL_RO);
+    parsedConfigRO.host = url.hostname;
+    parsedConfigRO.port = parseInt(url.port) || 5432;
+    parsedConfigRO.database = url.pathname.slice(1);
+    parsedConfigRO.user = url.username;
+    parsedConfigRO.password = url.password;
+  } catch (e) {
+    console.error('[DB] Failed to parse DATABASE_URL_RO:', e.message);
+  }
+}
+
 // ---- Эффективные хосты
-const RW_HOST = process.env.PGHOST     || process.env.DB_HOST     || '';
-const RO_HOST = process.env.PGHOST_RO  || process.env.DB_HOST_RO  || RW_HOST;
+const RW_HOST = parsedConfig.host || process.env.PGHOST || process.env.DB_HOST || 'amvera-alex1976-cnpg-reports-db-rw';
+const RO_HOST = parsedConfigRO.host || process.env.PGHOST_RO || process.env.DB_HOST_RO || RW_HOST;
 
 // ---- Общая база конфигурации
 const base = {
-  port: Number(process.env.PGPORT || process.env.DB_PORT || 5432),
-  database: process.env.PGDATABASE || process.env.DB_NAME || 'reports',
-  user: process.env.PGUSER || process.env.DB_USER || 'reports_admin',
-  password: process.env.PGPASSWORD || process.env.DB_PASSWORD || 'Qwerty12345!',
+  port: Number(parsedConfig.port || process.env.PGPORT || process.env.DB_PORT || 5432),
+  database: parsedConfig.database || process.env.PGDATABASE || process.env.DB_NAME || 'reports',
+  user: parsedConfig.user || process.env.PGUSER || process.env.DB_USER || 'reports_admin',
+  password: parsedConfig.password || process.env.PGPASSWORD || process.env.DB_PASSWORD || 'Qwerty12345!',
   max: Number(process.env.PGPOOL_MAX || 20),
   idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT || 30000),
   connectionTimeoutMillis: Number(process.env.DB_CONN_TIMEOUT || 2000),
