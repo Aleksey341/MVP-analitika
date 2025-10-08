@@ -122,7 +122,7 @@ async function resolveTables() {
       to_regclass('public.services_catalog')   AS scatalog,
       to_regclass('public.service_values')     AS svalues
   `;
-  const { rows } = await poolRO.query(q);
+  const { rows } = await pool.query(q);
   const r = rows[0];
 
   DB.indicatorsCatalog = r.icatalog ? 'public.indicators_catalog' : (r.indicators ? 'public.indicators' : null);
