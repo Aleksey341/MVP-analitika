@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "echo 'No build step required'",
+    "build": "cd frontend && npm install && npm run build",
+    "build:frontend": "cd frontend && npm install && npm run build",
     "db:init": "node scripts/init-database.js",
     "db:check": "node scripts/check-db.js",
     "db:migrate": "node migrate.js --file \"./муниципалитеты с главами и должностями.xlsx\" --sheet \"Лист1\"",
