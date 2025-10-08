@@ -14,7 +14,7 @@
     "db:clear": "node scripts/clear-test-data.js",
     "seed": "node seed.js",
     "create-admin": "node scripts/create-admin.js",
-    "postinstall": "echo 'Run: npm run db:init to initialize database'"
+    "postinstall": "npm run build || echo 'Frontend build failed, but continuing...'"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

@@ -85,6 +85,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 /* ---------- Статика ---------- */
 app.use(express.static('public'));
 
+// Serve React app static files
+const frontendDistPath = path.join(__dirname, 'frontend', 'dist');
+app.use(express.static(frontendDistPath));
+
 /* ---------- Лог запросов ---------- */
 app.use((req, _res, next) => {
   console.log(`${new Date().toISOString()} ${req.method} ${req.url} - ${req.ip}`);
@@ -1098,6 +1102,22 @@ const shutdown = async (signal) => {
 };
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
+
+/* ---------- SPA Fallback: все остальные GET запросы → React ---------- */
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+
+  const indexPath = path.join(__dirname, 'frontend', 'dist', 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Failed to send index.html:', err);
+      res.status(404).send('React app not built. Run: npm run build');
+    }
+  });
+});
 
 /* ---------- Отладка: печать всех роутов ---------- */
 function printRoutes() {
