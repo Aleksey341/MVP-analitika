@@ -4,11 +4,11 @@
   "description": "Sistema de reportes municipales con dashboard y exportación",
   "main": "server.js",
   "scripts": {
-    "start": "start": "node server.js",
+    "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "cd frontend && npm install && npm run build",
-    "build:frontend": "cd frontend && npm install && npm run build",
-    "build:frontend:check": "test -f frontend/dist/index.html || (cd frontend && npm install && npm run build && cd ..)",
+    "build": "npm --prefix frontend install && npm --prefix frontend run build",
+    "build:frontend": "npm --prefix frontend install && npm --prefix frontend run build",
+    "build:frontend:check": "test -f frontend/dist/index.html || (npm --prefix frontend install && npm --prefix frontend run build)",
     "db:init": "node scripts/init-database.js",
     "db:check": "node scripts/check-db.js",
     "db:migrate": "node migrate.js --file \"./муниципалитеты с главами и должностями.xlsx\" --sheet \"Лист1\"",
@@ -40,13 +40,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": [
-    "reports",
-    "dashboard",
-    "postgresql",
-    "amvera"
-  ],
+  "keywords": ["reports", "dashboard", "postgresql", "amvera"],
   "author": "alex1976",
   "license": "MIT"
 }
-
