@@ -4,7 +4,7 @@
   "description": "Sistema de reportes municipales con dashboard y exportación",
   "main": "server.js",
   "scripts": {
-    "start": "npm run build:frontend:check && node server.js",
+    "start": "start": "node server.js",
     "dev": "nodemon server.js",
     "build": "cd frontend && npm install && npm run build",
     "build:frontend": "cd frontend && npm install && npm run build",
@@ -49,3 +49,4 @@
   "author": "alex1976",
   "license": "MIT"
 }
+
