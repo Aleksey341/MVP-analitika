@@ -20,10 +20,11 @@ const app = express();
 app.set('trust proxy', 1);
 const PORT = Number(process.env.PORT || 8080);
 
-/* ----------------------- утилиты ----------------------- */
+/* ----------------------- пути фронта ----------------------- */
 const FRONT_DIST = path.join(__dirname, 'frontend', 'dist');
 const INDEX_HTML = path.join(FRONT_DIST, 'index.html');
 
+/* ----------------------- утилиты ----------------------- */
 function logSql(tag, sql, params = []) {
   console.log(`[SQL][${tag}] ${sql.replace(/\s+/g, ' ').trim()}`);
   if (params && params.length) console.log(`[SQL][${tag}] params:`, params);
@@ -60,17 +61,14 @@ app.use(
   })
 );
 
-// CORS: если задан CORS_ORIGINS — белый список, иначе — отражаем Origin
+// CORS
 const corsOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
-
 app.use(
   cors({
-    origin: corsOrigins.length
-      ? corsOrigins
-      : (origin, cb) => cb(null, origin || true),
+    origin: corsOrigins.length ? corsOrigins : (origin, cb) => cb(null, origin || true),
     credentials: true,
   })
 );
@@ -97,18 +95,16 @@ app.use(
 /* -------------------- лог запросов -------------------- */
 app.use((req, _res, next) => {
   console.log(`${new Date().toISOString()} ${req.method} ${req.url} - ${req.ip}`);
-  if (req.path.startsWith('/api/')) {
-    console.log('[DEBUG] API hit →', req.method, req.originalUrl);
-  }
+  if (req.path.startsWith('/api/')) console.log('[DEBUG] API hit →', req.method, req.originalUrl);
   next();
 });
 
 /* ------------------ autodetect таблиц БД ------------------ */
 const DB = {
-  indicatorsCatalog: null,
-  indicatorValues: null,
-  servicesCatalog: null,
-  serviceValues: null,
+  indicatorsCatalog: null,   // public.indicators_catalog | public.indicators
+  indicatorValues: null,     // public.indicator_values
+  servicesCatalog: null,     // public.services_catalog
+  serviceValues: null,       // public.service_values
 };
 
 async function resolveTables() {
@@ -137,7 +133,7 @@ resolveTables();
 /* ================== служебные эндпоинты (до API/статики) ================== */
 app.get('/ping', (_req, res) => res.send('PONG from mvp-analitika server!'));
 
-// health в двух вариантах: /health и /api/health
+// health (два алиаса: /health и /api/health)
 async function healthHandler(_req, res) {
   try {
     await pool.query('SELECT 1');
@@ -176,15 +172,19 @@ try {
   console.error('❌ Failed to load services dashboard routes:', err.message);
 }
 
-/* --- примеры API из проекта (оставлены как были) --- */
+/* ---- Справочник услуг ---- */
 app.get('/api/services-catalog', requireAuth, async (_req, res, next) => {
   try {
-    const sql = `SELECT id, name, category, description FROM services_catalog ORDER BY category, name`;
+    const sql = `
+      SELECT id, name, category, description
+      FROM services_catalog
+      ORDER BY category, name`;
     const { rows } = await poolRO.query(sql);
     res.json(rows);
   } catch (err) { next(err); }
 });
 
+/* ---- Значения услуг (чтение) ---- */
 app.get('/api/service-values', requireAuth, async (req, res, next) => {
   try {
     const { year, month, municipality_id } = req.query;
@@ -201,10 +201,473 @@ app.get('/api/service-values', requireAuth, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/* --------- импорт/экспорт/отчёты и прочие маршруты (как были) --------- */
-// ... весь ваш остальной код API (reports/export, reports/save, indicators, services, dashboard и т.д.)
-// Я оставил его без изменений по смыслу; порядок не критичен, пока он находится ДО статики и SPA-fallback.
-// >>> ВСТАВЬТЕ сюда блоки из вашей версии (они не изменялись логически) <<<
+/* ---- Муниципалитеты ---- */
+app.get('/api/municipalities', async (_req, res, next) => {
+  try {
+    const sql = 'SELECT id, name FROM public.municipalities ORDER BY name';
+    logSql('municipalities', sql);
+    const { rows } = await poolRO.query(sql);
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
+/* ---- Все муниципалитеты (без авторизации) ---- */
+app.get('/api/municipalities/all', async (_req, res, next) => {
+  try {
+    const sql = 'SELECT id, name FROM public.municipalities ORDER BY name';
+    logSql('municipalities-all', sql);
+    const { rows } = await poolRO.query(sql);
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
+/* ---- Муниципалитеты пользователя ---- */
+app.get('/api/my/municipalities', requireAuth, async (req, res, next) => {
+  try {
+    const user = req.session.user;
+    if (user.role === 'admin') {
+      const { rows } = await poolRO.query('SELECT id, name FROM public.municipalities ORDER BY name');
+      return res.json(rows);
+    }
+    if (!user.municipality_id) return res.json([]);
+    const sql = `
+      SELECT id, name FROM public.municipalities
+      WHERE id=$1 ORDER BY name`;
+    const { rows } = await poolRO.query(sql, [user.municipality_id]);
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
+/* ---- Индикаторы ---- */
+app.get('/api/indicators/form_1_gmu', async (_req, res, next) => {
+  try {
+    if (!DB.indicatorsCatalog) return res.status(500).json({ error: 'Catalog table not found' });
+    const sql = `
+      SELECT id, code, name, unit
+      FROM ${DB.indicatorsCatalog}
+      WHERE form_code='form_1_gmu'
+      ORDER BY sort_order NULLS LAST, id`;
+    const { rows } = await poolRO.query(sql);
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
+app.get('/api/indicators/:formCode', async (req, res, next) => {
+  try {
+    if (!DB.indicatorsCatalog) return res.status(500).json({ error: 'Catalog table not found' });
+    const { formCode } = req.params;
+    const sql = `
+      SELECT id, code, name, unit
+      FROM ${DB.indicatorsCatalog}
+      WHERE form_code=$1
+      ORDER BY sort_order NULLS LAST, id`;
+    const { rows } = await poolRO.query(sql, [formCode]);
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
+/* ---- Дашборд (старый по indicator_values) ---- */
+app.get('/api/dashboard/data', requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const year = Number(req.query.year) || new Date().getFullYear();
+    if (!DB.indicatorValues) {
+      const byMonth = Array.from({ length: 12 }, (_, i) => ({ month: i + 1, total_value: 0, records: 0 }));
+      return res.json({ year, byMonth });
+    }
+    const sql = `
+      SELECT period_month AS month,
+             COALESCE(SUM(value_numeric),0) AS total_value,
+             COUNT(*) AS records
+      FROM ${DB.indicatorValues}
+      WHERE period_year=$1
+      GROUP BY period_month
+      ORDER BY period_month`;
+    const { rows } = await poolRO.query(sql, [year]);
+    const byMonth = Array.from({ length: 12 }, (_, i) => {
+      const m = i + 1;
+      const r = rows.find(x => Number(x.month) === m);
+      return { month: m, total_value: r ? Number(r.total_value) : 0, records: r ? Number(r.records) : 0 };
+    });
+    res.json({ year, byMonth });
+  } catch (err) { next(err); }
+});
+
+/* ---- Статистика ---- */
+app.get('/api/stats', async (_req, res, next) => {
+  try {
+    const promises = [poolRO.query('SELECT COUNT(*)::int AS cnt FROM public.municipalities')];
+    if (DB.indicatorValues) promises.push(poolRO.query(`SELECT COUNT(*)::int AS cnt FROM ${DB.indicatorValues}`));
+    else promises.push(Promise.resolve({ rows: [{ cnt: 0 }] }));
+    const [m, v] = await Promise.all(promises);
+    res.json({ municipalities: m.rows[0].cnt, indicator_values: v.rows[0].cnt });
+  } catch (err) { next(err); }
+});
+
+/* =================== СЕРВИСЫ (новые API) =================== */
+app.get('/api/service-categories', async (_req, res, next) => {
+  try {
+    if (!DB.servicesCatalog) return res.json([]);
+    const sql = `
+      SELECT COALESCE(category,'') AS category, COUNT(*)::int AS cnt
+      FROM ${DB.servicesCatalog}
+      GROUP BY 1
+      ORDER BY 1`;
+    const { rows } = await poolRO.query(sql);
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
+app.get('/api/services', async (req, res, next) => {
+  try {
+    if (!DB.servicesCatalog) return res.json([]);
+    const { category } = req.query;
+    let sql = `
+      SELECT id, code, name, unit, category
+      FROM ${DB.servicesCatalog}`;
+    const params = [];
+    if (category) { sql += ` WHERE category=$1`; params.push(category); }
+    sql += ` ORDER BY COALESCE(category,''), name`;
+    const { rows } = await poolRO.query(sql, params);
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
+app.get('/api/services/:id/monthly', async (req, res, next) => {
+  try {
+    if (!DB.serviceValues) {
+      return res.json({
+        serviceId: Number(req.params.id),
+        year: Number(req.query.year) || new Date().getFullYear(),
+        byMonth: Array.from({ length: 12 }, (_, i) => ({ month: i + 1, total: 0 })),
+      });
+    }
+    const serviceId = Number(req.params.id);
+    const year = Number(req.query.year) || new Date().getFullYear();
+    const sql = `
+      SELECT period_month AS month, SUM(value_numeric) AS total
+      FROM ${DB.serviceValues}
+      WHERE service_id=$1 AND period_year=$2
+      GROUP BY period_month
+      ORDER BY period_month`;
+    const { rows } = await poolRO.query(sql, [serviceId, year]);
+    const byMonth = Array.from({ length: 12 }, (_, i) => {
+      const m = i + 1;
+      const r = rows.find(x => Number(x.month) === m);
+      return { month: m, total: r ? Number(r.total) : 0 };
+    });
+    res.json({ serviceId, year, byMonth });
+  } catch (err) { next(err); }
+});
+
+app.get('/api/services/:id/details', async (req, res, next) => {
+  try {
+    if (!DB.serviceValues) {
+      return res.json({
+        serviceId: Number(req.params.id),
+        year: Number(req.query.year) || new Date().getFullYear(),
+        rows: [],
+      });
+    }
+    const serviceId = Number(req.params.id);
+    const year = Number(req.query.year) || new Date().getFullYear();
+    const sql = `
+      SELECT m.id AS municipality_id, m.name, sv.period_month, sv.value_numeric
+      FROM ${DB.serviceValues} sv
+      JOIN public.municipalities m ON m.id = sv.municipality_id
+      WHERE sv.service_id=$1 AND sv.period_year=$2
+      ORDER BY m.name, sv.period_month`;
+    const { rows } = await poolRO.query(sql, [serviceId, year]);
+    res.json({ serviceId, year, rows });
+  } catch (err) { next(err); }
+});
+
+app.get('/api/dashboard/recent-updates', requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const year = Number(req.query.year) || new Date().getFullYear();
+    const municipalityId = req.query.municipality_id ? Number(req.query.municipality_id) : null;
+    const serviceId = req.query.service_id ? Number(req.query.service_id) : null;
+    const limit = Math.min(Number(req.query.limit) || 50, 200);
+
+    const updates = [];
+
+    if (DB.indicatorValues && DB.indicatorsCatalog) {
+      let sql = `
+        SELECT m.name AS municipality, ic.name AS item_name,
+               iv.period_year, iv.period_month, iv.value_numeric AS value,
+               iv.updated_at, iv.created_at
+        FROM ${DB.indicatorValues} iv
+        JOIN public.municipalities m ON m.id = iv.municipality_id
+        JOIN ${DB.indicatorsCatalog} ic ON ic.id = iv.indicator_id
+        WHERE iv.period_year=$1`;
+      const params = [year];
+      let p = 2;
+      if (municipalityId) { sql += ` AND iv.municipality_id=$${p++}`; params.push(municipalityId); }
+      sql += ` ORDER BY iv.updated_at DESC LIMIT $${p}`; params.push(limit);
+      const { rows } = await poolRO.query(sql, params);
+      for (const r of rows) {
+        updates.push({
+          municipality: r.municipality,
+          item_name: r.item_name,
+          period_year: Number(r.period_year),
+          period_month: Number(r.period_month),
+          value: Number(r.value) || 0,
+          updated_at: r.updated_at,
+          is_new: r.created_at && r.updated_at && +new Date(r.created_at) === +new Date(r.updated_at)
+        });
+      }
+    }
+
+    if (DB.serviceValues && DB.servicesCatalog) {
+      let sql = `
+        SELECT m.name AS municipality, sc.name AS item_name,
+               sv.period_year, sv.period_month, sv.value_numeric AS value,
+               sv.updated_at, sv.created_at
+        FROM ${DB.serviceValues} sv
+        JOIN public.municipalities m ON m.id = sv.municipality_id
+        JOIN ${DB.servicesCatalog} sc ON sc.id = sv.service_id
+        WHERE sv.period_year=$1`;
+      const params = [year];
+      let p = 2;
+      if (municipalityId) { sql += ` AND sv.municipality_id=$${p++}`; params.push(municipalityId); }
+      if (serviceId) { sql += ` AND sv.service_id=$${p++}`; params.push(serviceId); }
+      sql += ` ORDER BY sv.updated_at DESC LIMIT $${p}`; params.push(limit);
+      const { rows } = await poolRO.query(sql, params);
+      for (const r of rows) {
+        updates.push({
+          municipality: r.municipality,
+          item_name: r.item_name,
+          period_year: Number(r.period_year),
+          period_month: Number(r.period_month),
+          value: Number(r.value) || 0,
+          updated_at: r.updated_at,
+          is_new: r.created_at && r.updated_at && +new Date(r.created_at) === +new Date(r.updated_at)
+        });
+      }
+    }
+
+    updates.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    res.json(updates.slice(0, limit));
+  } catch (err) { next(err); }
+});
+
+/* ---------- Импорт JSON/Excel ---------- */
+function requireImportAuth(req, res, next) {
+  if (process.env.IMPORT_ENABLED !== 'true') return res.status(403).json({ error: 'Import disabled' });
+  const token = req.headers['x-import-token'];
+  if (!token || token !== process.env.IMPORT_TOKEN) return res.status(401).json({ error: 'Unauthorized' });
+  next();
+}
+
+/* импорт справочника услуг (UPSERT по code) */
+app.post('/api/import/services-catalog', requireImportAuth, async (req, res, next) => {
+  try {
+    if (!DB.servicesCatalog) return res.status(500).json({ error: 'services_catalog not found' });
+    const items = Array.isArray(req.body) ? req.body : [];
+    if (!items.length) return res.json({ inserted: 0, updated: 0 });
+
+    const cols = ['code', 'name', 'unit', 'category'];
+    const values = [];
+    const params = [];
+    let p = 1;
+    for (const it of items) {
+      values.push(`($${p++}, $${p++}, $${p++}, $${p++})`);
+      params.push((it.code || '').trim(), (it.name || '').trim(), (it.unit || '').trim(), (it.category || '').trim());
+    }
+    const sql = `
+      INSERT INTO ${DB.servicesCatalog} (${cols.join(', ')})
+      VALUES ${values.join(', ')}
+      ON CONFLICT (code) DO UPDATE
+      SET name=EXCLUDED.name,
+          unit=COALESCE(NULLIF(EXCLUDED.unit,''), ${DB.servicesCatalog}.unit),
+          category=COALESCE(NULLIF(EXCLUDED.category,''), ${DB.servicesCatalog}.category)
+      RETURNING xmax <> 0 AS updated`;
+    const { rows } = await poolRO.query(sql, params);
+    const updated = rows.filter(r => r.updated).length;
+    res.json({ inserted: rows.length - updated, updated });
+  } catch (err) { next(err); }
+});
+
+/* импорт значений из Excel (indicator_values) */
+const upload = multer({ dest: 'uploads/' });
+
+app.post('/api/import/service-values', requireAuth, requireMunicipalityAccess, upload.single('file'), async (req, res, next) => {
+  const client = await pool.connect();
+  try {
+    if (!req.file) { client.release(); return res.status(400).json({ error: 'Файл не загружен' }); }
+
+    const { municipality_id, period_year, period_month, service_id, service_name } = req.body;
+    if (!municipality_id || !period_year || !period_month) { client.release(); return res.status(400).json({ error: 'Отсутствуют параметры' }); }
+    if (!service_id) { client.release(); return res.status(400).json({ error: 'Не указана услуга (service_id)' }); }
+
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(req.file.path);
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) { client.release(); return res.status(400).json({ error: 'Excel файл пуст' }); }
+
+    const indicatorsRes = await poolRO.query(`
+      SELECT id, code, name FROM ${DB.indicatorsCatalog} WHERE form_code='form_1_gmu'
+    `);
+    const indicatorsByCode = new Map(indicatorsRes.rows.map(r => [r.code.trim().toLowerCase(), r]));
+    const indicatorsByName = new Map(indicatorsRes.rows.map(r => [r.name.trim().toLowerCase(), r]));
+
+    const vals = [];
+    const params = [];
+    let p = 1;
+    let rowCount = 0;
+
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber <= 2) return;
+      const cellA = row.getCell(1).value; // Код
+      const cellC = row.getCell(3).value; // Наименование
+      if (!cellA && !cellC) return;
+
+      let value = null;
+      for (let col = 5; col <= 10; col++) {
+        const v = row.getCell(col).value;
+        if (v != null && !isNaN(Number(v))) { value = Number(v); break; }
+      }
+      if (value === null) return;
+
+      const keyByCode = cellA ? String(cellA).trim().toLowerCase() : null;
+      const keyByName = cellC ? String(cellC).trim().toLowerCase() : null;
+
+      let indicator = null;
+      if (keyByCode) indicator = indicatorsByCode.get(keyByCode);
+      if (!indicator && keyByName) indicator = indicatorsByName.get(keyByName);
+
+      if (indicator) {
+        vals.push(`($${p++}, $${p++}, $${p++}, $${p++}, $${p++}, $${p++})`);
+        params.push(municipality_id, service_id, indicator.id, period_year, period_month, value);
+        rowCount++;
+      }
+    });
+
+    if (!vals.length) { client.release(); return res.json({ upserted: 0, message: 'Не найдено совпадений с показателями' }); }
+
+    const sql = `
+      INSERT INTO ${DB.indicatorValues}
+        (municipality_id, service_id, indicator_id, period_year, period_month, value_numeric)
+      VALUES ${vals.join(', ')}
+      ON CONFLICT (municipality_id, indicator_id, period_year, period_month)
+      DO UPDATE SET value_numeric=EXCLUDED.value_numeric, service_id=EXCLUDED.service_id, updated_at=CURRENT_TIMESTAMP`;
+    await client.query('BEGIN');
+    const result = await client.query(sql, params);
+    await client.query('COMMIT');
+    client.release();
+
+    res.json({ upserted: result.rowCount, message: `Импортировано ${rowCount} строк для услуги ${service_name || service_id}` });
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch {}
+    client.release();
+    next(err);
+  }
+});
+
+/* ---------- Экспорт отчёта в Excel ---------- */
+app.post('/api/reports/export', requireAuth, requireMunicipalityAccess, async (req, res, next) => {
+  try {
+    const { municipality_id, period_year, period_month } = req.body;
+    if (!municipality_id || !period_year || !period_month) {
+      return res.status(400).json({ error: 'Отсутствуют параметры: municipality_id, period_year, period_month' });
+    }
+
+    const muniRes = await poolRO.query('SELECT name FROM public.municipalities WHERE id=$1', [municipality_id]);
+    const muniName = muniRes.rows[0]?.name || 'Неизвестно';
+
+    let data = [];
+    if (DB.indicatorsCatalog && DB.indicatorValues) {
+      const sql = `
+        SELECT ic.code, ic.name, ic.unit, COALESCE(iv.value_numeric,0) AS value
+        FROM ${DB.indicatorsCatalog} ic
+        LEFT JOIN ${DB.indicatorValues} iv
+          ON iv.indicator_id=ic.id AND iv.municipality_id=$1 AND iv.period_year=$2 AND iv.period_month=$3
+        WHERE ic.form_code='form_1_gmu'
+        ORDER BY ic.sort_order NULLS LAST, ic.id`;
+      const result = await poolRO.query(sql, [municipality_id, period_year, period_month]);
+      data = result.rows;
+    }
+    if (!data.length) return res.status(404).json({ error: 'Нет данных для экспорта' });
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Отчет 1-ГМУ');
+
+    worksheet.mergeCells('A1:D1');
+    worksheet.getCell('A1').value = `Форма 1-ГМУ - ${muniName}`;
+    worksheet.getCell('A1').font = { bold: true, size: 14 };
+    worksheet.getCell('A1').alignment = { horizontal: 'center' };
+
+    worksheet.mergeCells('A2:D2');
+    worksheet.getCell('A2').value = `Период: ${String(period_month).padStart(2, '0')}.${period_year}`;
+    worksheet.getCell('A2').alignment = { horizontal: 'center' };
+
+    worksheet.getRow(4).values = ['№', 'Показатель', 'Единица измерения', 'Значение'];
+    worksheet.getRow(4).font = { bold: true };
+    worksheet.getRow(4).alignment = { horizontal: 'center' };
+
+    data.forEach((row, idx) => worksheet.addRow([idx + 1, row.name, row.unit, row.value]));
+
+    worksheet.getColumn(1).width = 8;
+    worksheet.getColumn(2).width = 50;
+    worksheet.getColumn(3).width = 20;
+    worksheet.getColumn(4).width = 15;
+
+    const borderStyle = { style: 'thin', color: { argb: 'FF000000' } };
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber >= 4) {
+        row.eachCell(cell => {
+          cell.border = { top: borderStyle, left: borderStyle, bottom: borderStyle, right: borderStyle };
+        });
+      }
+    });
+
+    const fileName = `Report_${muniName.replace(/\s+/g, '_')}_${period_year}_${String(period_month).padStart(2, '0')}.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) { next(err); }
+});
+
+/* ---------- Сохранение отчёта ---------- */
+app.post('/api/reports/save', requireAuth, requireMunicipalityAccess, async (req, res, next) => {
+  const client = await pool.connect();
+  try {
+    if (!DB.indicatorValues) { client.release(); return res.status(500).json({ error: 'indicator_values table not found' }); }
+
+    const { municipality_id, period_year, period_month, values } = req.body;
+    if (!municipality_id || !period_year || !period_month) { client.release(); return res.status(400).json({ error: 'Отсутствуют обязательные поля' }); }
+    if (!Array.isArray(values) || !values.length) { client.release(); return res.status(400).json({ error: 'Массив values пуст' }); }
+
+    const vals = [];
+    const params = [];
+    let p = 1;
+    for (const item of values) {
+      const indicatorId = Number(item.indicator_id);
+      const value = item.value == null ? null : Number(item.value);
+      if (!indicatorId) continue;
+      vals.push(`($${p++}, $${p++}, $${p++}, $${p++}, $${p++})`);
+      params.push(municipality_id, indicatorId, period_year, period_month, value);
+    }
+    if (!vals.length) { client.release(); return res.status(400).json({ error: 'Нет валидных данных для сохранения' }); }
+
+    const sql = `
+      INSERT INTO ${DB.indicatorValues}
+        (municipality_id, indicator_id, period_year, period_month, value_numeric)
+      VALUES ${vals.join(', ')}
+      ON CONFLICT (municipality_id, indicator_id, period_year, period_month)
+      DO UPDATE SET value_numeric=EXCLUDED.value_numeric`;
+    await client.query('BEGIN');
+    const result = await client.query(sql, params);
+    await client.query('COMMIT');
+    client.release();
+
+    res.json({ success: true, saved: result.rowCount, message: `Сохранено ${vals.length} значений показателей` });
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch {}
+    client.release();
+    next(err);
+  }
+});
 
 /* ============================ DEBUG ============================ */
 app.get('/api/debug/routes', (_req, res) => {
@@ -236,25 +699,19 @@ app.get('/api/debug/frontend', (_req, res) => {
 });
 
 /* ============================ СТАТИКА ============================ */
-// public (если нужен)
+// опциональная папка public
 app.use(express.static(path.join(__dirname, 'public')));
-
-// сборка фронтенда (Vite) — доступ к /assets/* и т.д.
+// сборка фронта
 app.use(express.static(FRONT_DIST));
 
 /* ============================ SPA FALLBACK ============================ */
-/**
- * ВАЖНО: fallback только для НЕ-/api/* путей.
- * Regex ^(?!/api/) — означает “всё, что не начинается с /api/”.
- * Сначала проверяем, что index.html существует — иначе показываем понятную ошибку.
- */
-app.get(/^(?!\/api\/).*/, (req, res) => {
+/* Важно: только для НЕ-/api/* */
+app.get(/^(?!\/api\/).*/, (_req, res) => {
   if (!fs.existsSync(INDEX_HTML)) {
     console.error('[SPA Fallback] index.html NOT FOUND at', INDEX_HTML);
     return res.status(404).send(
       `<h1>React app not built</h1>
-       <p>Frontend not found. Ensure build step ran:
-       <code>npm --prefix frontend run build</code></p>
+       <p>Run: <code>npm --prefix frontend run build</code></p>
        <p>Looking for: ${INDEX_HTML}</p>`
     );
   }
