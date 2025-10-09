@@ -29,11 +29,6 @@ function logSql(tag, sql, params = []) {
   console.log(`[SQL][${tag}] ${sql.replace(/\s+/g, ' ').trim()}`);
   if (params && params.length) console.log(`[SQL][${tag}] params:`, params);
 }
-{
-  "scripts": {
-    "start": "node server.js"
-  }
-}
 
 /* --------------------- системные мидлы --------------------- */
 app.use(
@@ -748,4 +743,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📝 Форма:   http://localhost:${PORT}/form`);
   console.log(`❤️ Health:  http://localhost:${PORT}/health`);
 });
+
 
