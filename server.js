@@ -101,10 +101,10 @@ app.use((req, _res, next) => {
 
 /* ------------------ autodetect таблиц БД ------------------ */
 const DB = {
-  indicatorsCatalog: null,   // public.indicators_catalog | public.indicators
-  indicatorValues: null,     // public.indicator_values
-  servicesCatalog: null,     // public.services_catalog
-  serviceValues: null,       // public.service_values
+  indicatorsCatalog: null,
+  indicatorValues: null,
+  servicesCatalog: null,
+  serviceValues: null,
 };
 
 async function resolveTables() {
@@ -699,13 +699,10 @@ app.get('/api/debug/frontend', (_req, res) => {
 });
 
 /* ============================ СТАТИКА ============================ */
-// опциональная папка public
 app.use(express.static(path.join(__dirname, 'public')));
-// сборка фронта
 app.use(express.static(FRONT_DIST));
 
 /* ============================ SPA FALLBACK ============================ */
-/* Важно: только для НЕ-/api/* */
 app.get(/^(?!\/api\/).*/, (_req, res) => {
   if (!fs.existsSync(INDEX_HTML)) {
     console.error('[SPA Fallback] index.html NOT FOUND at', INDEX_HTML);
@@ -743,5 +740,3 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📝 Форма:   http://localhost:${PORT}/form`);
   console.log(`❤️ Health:  http://localhost:${PORT}/health`);
 });
-
-
