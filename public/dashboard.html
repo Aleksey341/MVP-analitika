@@ -1278,7 +1278,7 @@ async function renderHeatmapDTP(){
     // Загружаем данные за все 12 месяцев
     const heatmapData = [];
 
-    for(const mun of municipalities.slice(0, 10)){ // Ограничим топ-10 для читаемости
+    for(const mun of municipalities){ // Показываем все муниципалитеты
       const munData = {
         municipality: mun.name,
         municipalityId: mun.id,
