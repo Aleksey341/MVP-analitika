@@ -159,7 +159,7 @@ router.get('/data', requireAuth, async (req, res, next) => {
       console.error('[Services] Error in categories query:', err.message);
     }
 
-    // 5. Top municipalities (for horizontal bar chart)
+    // 5. All municipalities (for horizontal bar chart)
     let topMunicipalities = [];
     try {
       const munQuery = `
@@ -174,7 +174,6 @@ router.get('/data', requireAuth, async (req, res, next) => {
         ${municipality_id ? `WHERE m.id = ${municipality_id}` : ''}
         GROUP BY m.id, m.name
         ORDER BY total DESC
-        LIMIT 10
       `;
       const munParams = month ? [currentYear, parseInt(month)] : [currentYear];
       console.log('[Services] Municipalities query:', munQuery, 'params:', munParams);
