@@ -233,4 +233,187 @@ router.get('/data', requireAuth, async (req, res, next) => {
   }
 });
 
+/**
+ * GET /api/services-dashboard/comparison
+ * Сравнительный анализ: текущий vs предыдущий период (MoM, YoY)
+ */
+router.get('/comparison', requireAuth, async (req, res, next) => {
+  try {
+    const { year, month, municipality_id, comparison_type = 'yoy' } = req.query;
+
+    if (!year) {
+      return res.status(400).json({
+        error: 'bad_request',
+        message: 'Параметр year обязателен'
+      });
+    }
+
+    const currentYear = parseInt(year);
+    const currentMonth = month ? parseInt(month) : null;
+
+    // Determine comparison period
+    let prevYear, prevMonth;
+    if (comparison_type === 'mom' && currentMonth) {
+      // Month-over-Month
+      if (currentMonth === 1) {
+        prevYear = currentYear - 1;
+        prevMonth = 12;
+      } else {
+        prevYear = currentYear;
+        prevMonth = currentMonth - 1;
+      }
+    } else {
+      // Year-over-Year (default)
+      prevYear = currentYear - 1;
+      prevMonth = currentMonth;
+    }
+
+    // Build query for current period
+    const buildQuery = (year, month) => {
+      let whereConditions = ['sv.period_year = $1'];
+      let params = [year];
+      let paramIndex = 2;
+
+      if (month) {
+        whereConditions.push(`sv.period_month = $${paramIndex}`);
+        params.push(month);
+        paramIndex++;
+      }
+
+      if (municipality_id) {
+        whereConditions.push(`sv.municipality_id = $${paramIndex}`);
+        params.push(parseInt(municipality_id));
+      }
+
+      return { whereClause: whereConditions.join(' AND '), params };
+    };
+
+    const current = buildQuery(currentYear, currentMonth);
+    const previous = buildQuery(prevYear, prevMonth);
+
+    // Fetch monthly dynamics for both periods
+    const monthlyQuery = `
+      SELECT
+        sv.period_month as month,
+        COALESCE(SUM(sv.value_numeric), 0) as total
+      FROM service_values sv
+      WHERE sv.period_year = $1
+      ${municipality_id ? 'AND sv.municipality_id = $2' : ''}
+      GROUP BY sv.period_month
+      ORDER BY sv.period_month
+    `;
+
+    const currentParams = municipality_id ? [currentYear, parseInt(municipality_id)] : [currentYear];
+    const prevParams = municipality_id ? [prevYear, parseInt(municipality_id)] : [prevYear];
+
+    const [currentData, prevData] = await Promise.all([
+      poolRO.query(monthlyQuery, currentParams),
+      poolRO.query(monthlyQuery, prevParams)
+    ]);
+
+    // Format data
+    const formatMonthlyData = (rows) => {
+      return Array.from({ length: 12 }, (_, i) => {
+        const m = i + 1;
+        const found = rows.find(r => parseInt(r.month) === m);
+        return {
+          month: m,
+          total: found ? parseInt(found.total) : 0
+        };
+      });
+    };
+
+    const currentMonthly = formatMonthlyData(currentData.rows);
+    const prevMonthly = formatMonthlyData(prevData.rows);
+
+    // Calculate total and change
+    const currentTotal = currentMonthly.reduce((sum, d) => sum + d.total, 0);
+    const prevTotal = prevMonthly.reduce((sum, d) => sum + d.total, 0);
+    const change = prevTotal > 0 ? ((currentTotal - prevTotal) / prevTotal * 100).toFixed(1) : null;
+
+    res.json({
+      comparison_type: comparison_type,
+      current_period: {
+        year: currentYear,
+        month: currentMonth,
+        total: currentTotal,
+        monthly: currentMonthly
+      },
+      previous_period: {
+        year: prevYear,
+        month: prevMonth,
+        total: prevTotal,
+        monthly: prevMonthly
+      },
+      change_percent: change
+    });
+
+  } catch (err) {
+    console.error('[Services Comparison] Error:', err);
+    next(err);
+  }
+});
+
+/**
+ * GET /api/services-dashboard/ranking
+ * Ранжирование муниципалитетов (топ-3 / худшие-3)
+ */
+router.get('/ranking', requireAuth, async (req, res, next) => {
+  try {
+    const { year, month } = req.query;
+
+    if (!year) {
+      return res.status(400).json({
+        error: 'bad_request',
+        message: 'Параметр year обязателен'
+      });
+    }
+
+    const currentYear = parseInt(year);
+    const currentMonth = month ? parseInt(month) : null;
+
+    // Query all municipalities with their totals
+    const rankingQuery = `
+      SELECT
+        m.id,
+        m.name,
+        COALESCE(SUM(sv.value_numeric), 0) as total,
+        COUNT(DISTINCT sv.service_id) as service_count
+      FROM municipalities m
+      LEFT JOIN service_values sv ON sv.municipality_id = m.id
+        AND sv.period_year = $1
+        ${currentMonth ? 'AND sv.period_month = $2' : ''}
+      GROUP BY m.id, m.name
+      ORDER BY total DESC
+    `;
+
+    const params = currentMonth ? [currentYear, currentMonth] : [currentYear];
+    const { rows } = await poolRO.query(rankingQuery, params);
+
+    // Calculate rankings with additional metrics
+    const ranked = rows.map((row, index) => ({
+      rank: index + 1,
+      id: row.id,
+      name: row.name,
+      total: parseInt(row.total),
+      service_count: parseInt(row.service_count),
+      avg_per_service: row.service_count > 0 ? Math.round(row.total / row.service_count) : 0
+    }));
+
+    const top3 = ranked.slice(0, 3);
+    const bottom3 = ranked.slice(-3).reverse();
+
+    res.json({
+      total_municipalities: ranked.length,
+      top_performers: top3,
+      need_attention: bottom3,
+      all_rankings: ranked
+    });
+
+  } catch (err) {
+    console.error('[Services Ranking] Error:', err);
+    next(err);
+  }
+});
+
 module.exports = router;
