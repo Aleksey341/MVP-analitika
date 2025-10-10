@@ -50,6 +50,25 @@
     .btn-wide:hover{opacity:.9}
 
     .hint{font-size:13px;color:var(--text-secondary);margin-top:8px}
+
+    /* постоянные подписи в центре района */
+    .leaflet-tooltip.mun-label{
+      background: rgba(0,0,0,.55);
+      border: none;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      pointer-events: none;
+    }
+    /* всплывающий tooltip при наведении */
+    .leaflet-tooltip.hover-label{
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
@@ -158,6 +177,7 @@
   let munNameToId = new Map(); // нормализованное имя -> id (из /api/municipalities/all)
   let lastPeriod = null;
   let gibddByMun = new Map(); // нормализованное имя -> агрегаты ДТП (последний период)
+  let labelItems = []; // хранилище постоянных подписей
 
   async function init(){
     // 1) Аутентификация (если нужно)
@@ -205,6 +225,11 @@
       maxZoom: 18
     }).addTo(map);
 
+    // Панель для постоянных подписей (поверх полигонов)
+    const labelPane = map.createPane('labels');
+    labelPane.style.zIndex = 650;
+    labelPane.style.pointerEvents = 'none';
+
     // 5) Подгрузка GeoJSON
     const gj = await fetch('/geo/lipetsk-municipalities.geojson');
     const geojson = await gj.json();
@@ -242,12 +267,17 @@
       },
       onEachFeature: (feature, layer)=>{
         const displayName = feature.properties['name:ru'] || feature.properties.name;
+
+        // Всплывающая подсказка при наведении
         layer.bindTooltip(displayName, {
           permanent: false,
           sticky: true,
           direction: 'top',
-          opacity: 0.9
+          className: 'hover-label'
         });
+
+        // Постоянная подпись в центре района
+        addFeatureLabel(layer, displayName);
 
         layer.on('click', ()=>{
           selectMunicipality(displayName);
@@ -257,8 +287,43 @@
       }
     }).addTo(map);
 
+    // Обновляем подписи при движении/масштабе
+    map.on('zoomend moveend', refreshLabels);
+    refreshLabels();
+
     // Автовыбор Липецка при старте
     setTimeout(()=>selectMunicipality('городской округ Липецк'), 400);
+  }
+
+  // Функция добавления постоянной подписи
+  function addFeatureLabel(layer, name){
+    const center = layer.getBounds().getCenter();
+    const t = L.tooltip({
+      pane: 'labels',
+      permanent: true,
+      direction: 'center',
+      className: 'mun-label',
+      opacity: 0.95
+    })
+      .setContent(name)
+      .setLatLng(center)
+      .addTo(map);
+
+    labelItems.push({ tooltip: t, layer });
+  }
+
+  // Показывать подписи только начиная с определённого масштаба
+  function refreshLabels(){
+    const show = map.getZoom() >= 8;  // порог можно подобрать (7–10)
+    labelItems.forEach(({ tooltip, layer }) => {
+      if (show) {
+        // держим подпись по центру при перемещении/масштабировании
+        tooltip.setLatLng(layer.getBounds().getCenter());
+        if (!map.hasLayer(tooltip)) map.addLayer(tooltip);
+      } else {
+        if (map.hasLayer(tooltip)) map.removeLayer(tooltip);
+      }
+    });
   }
 
   function selectMunicipality(displayName){
