@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Интерактивная карта - Липецкая область</title>
+  <link rel="stylesheet" href="/no-badge.css" />
+  <style>
+    :root {
+      --bg-primary: #0f1115;
+      --bg-secondary: #1a1d24;
+      --bg-tertiary: #232a36;
+      --border: #2b3444;
+      --text-primary: #e8eef7;
+      --text-secondary: #9fb0c9;
+      --text-muted: #6a7789;
+      --accent-blue: #2563eb;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+
+    header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    h1 { margin: 0; font-size: 24px; }
+    .subtitle { color: var(--text-secondary); font-size: 14px; margin: 4px 0 0 0; }
+
+    main {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .map-container {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      position: relative;
+    }
+
+    .map-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .map-image {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 8px;
+      filter: brightness(1.1) contrast(1.05);
+    }
+
+    .map-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .region-overlay {
+      position: absolute;
+      background: transparent;
+      border: 2px solid transparent;
+      cursor: pointer;
+      pointer-events: all;
+      transition: all 0.3s ease;
+    }
+
+    .region-overlay:hover {
+      background: rgba(37, 99, 235, 0.3);
+      border: 2px solid var(--accent-blue);
+      z-index: 10;
+    }
+
+    .region-overlay.active {
+      background: rgba(16, 185, 129, 0.4);
+      border: 3px solid var(--success);
+      z-index: 11;
+    }
+
+    .info-panel {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      position: sticky;
+      top: 100px;
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+    }
+
+    .info-panel h2 {
+      margin: 0 0 16px 0;
+      font-size: 20px;
+      color: var(--text-primary);
+    }
+
+    .info-empty {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 40px 20px;
+    }
+
+    .info-empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .stat-change {
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .stat-change.positive { color: var(--success); }
+    .stat-change.negative { color: var(--danger); }
+
+    .btn {
+      padding: 10px 20px;
+      background: var(--accent-blue);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn:hover {
+      background: #1d4ed8;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    .tooltip {
+      position: absolute;
+      background: var(--bg-primary);
+      border: 2px solid var(--accent-blue);
+      border-radius: 8px;
+      padding: 12px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 1000;
+      font-size: 13px;
+      max-width: 200px;
+      white-space: nowrap;
+    }
+
+    .tooltip.show {
+      opacity: 1;
+    }
+
+    .tooltip-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+    }
+
+    .instructions {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-content">
+    <div>
+      <h1>🗺️ Интерактивная карта Липецкой области</h1>
+      <p class="subtitle">Наведите на регион для просмотра названия, кликните для данных</p>
+    </div>
+    <a href="/dashboard" class="btn">← К дашборду</a>
+  </div>
+</header>
+
+<main>
+  <div class="map-container">
+    <div class="instructions">
+      💡 <strong>Инструкция:</strong> Наведите курсор на любой регион на карте, чтобы увидеть его название. Кликните для просмотра детальной статистики.
+    </div>
+
+    <div class="map-wrapper" id="map-wrapper">
+      <!-- Реальная карта Липецкой области -->
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Lipetsk_in_Russia.svg/800px-Lipetsk_in_Russia.svg.png"
+           alt="Карта Липецкой области"
+           class="map-image"
+           id="map-image" />
+
+      <!-- Интерактивные области (координаты в процентах) -->
+      <div class="map-overlay" id="map-overlay">
+        <!-- Регионы будут добавлены через JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <div class="info-panel" id="info-panel">
+    <div class="info-empty">
+      <div class="info-empty-icon">🗺️</div>
+      <p>Выберите муниципалитет на карте<br>для просмотра статистики</p>
+    </div>
+  </div>
+</main>
+
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-title"></div>
+</div>
+
+<script>
+// ========================================
+// MUNICIPALITIES WITH COORDINATES
+// Координаты регионов на карте (в процентах от размера изображения)
+// ========================================
+
+const municipalities = [
+  // Север
+  { id: 4, name: 'Данковский район', left: 25, top: 5, width: 18, height: 15 },
+  { id: 17, name: 'Усманский район', left: 5, top: 18, width: 15, height: 20 },
+  { id: 12, name: 'Лебедянский район', left: 22, top: 22, width: 16, height: 18 },
+  { id: 16, name: 'Тербунский район', left: 44, top: 8, width: 16, height: 18 },
+  { id: 20, name: 'Чаплыгинский район', left: 45, top: 2, width: 18, height: 15 },
+  { id: 13, name: 'Лев-Толстовский район', left: 64, top: 10, width: 18, height: 16 },
+
+  // Центр
+  { id: 14, name: 'Липецкий район', left: 38, top: 28, width: 18, height: 18 },
+  { id: 1, name: 'г. Липецк', left: 44, top: 35, width: 8, height: 8 },
+  { id: 5, name: 'Добринский район', left: 18, top: 38, width: 16, height: 18 },
+  { id: 9, name: 'Задонский район', left: 50, top: 30, width: 16, height: 20 },
+  { id: 6, name: 'Добровский район', left: 68, top: 28, width: 16, height: 20 },
+  { id: 15, name: 'Становлянский район', left: 85, top: 32, width: 14, height: 18 },
+
+  // Юг
+  { id: 3, name: 'Грязинский район', left: 32, top: 48, width: 16, height: 16 },
+  { id: 11, name: 'Краснинский район', left: 20, top: 58, width: 16, height: 18 },
+  { id: 19, name: 'Воловский район', left: 8, top: 70, width: 14, height: 18 },
+  { id: 18, name: 'Хлевенский район', left: 48, top: 52, width: 16, height: 18 },
+  { id: 8, name: 'Елецкий район', left: 50, top: 68, width: 18, height: 20 },
+  { id: 2, name: 'г. Елец', left: 54, top: 74, width: 8, height: 8 },
+  { id: 7, name: 'Долгоруковский район', left: 70, top: 52, width: 16, height: 22 },
+  { id: 10, name: 'Измалковский район', left: 70, top: 76, width: 16, height: 18 }
+];
+
+// ========================================
+// CREATE INTERACTIVE REGIONS
+// ========================================
+
+function createInteractiveMap() {
+  const overlay = document.getElementById('map-overlay');
+  const mapImage = document.getElementById('map-image');
+
+  municipalities.forEach(mun => {
+    const region = document.createElement('div');
+    region.className = 'region-overlay';
+    region.dataset.munId = mun.id;
+    region.dataset.munName = mun.name;
+
+    region.style.left = mun.left + '%';
+    region.style.top = mun.top + '%';
+    region.style.width = mun.width + '%';
+    region.style.height = mun.height + '%';
+
+    region.addEventListener('click', () => selectMunicipality(mun.id, mun.name));
+    region.addEventListener('mouseenter', (e) => showTooltip(e, mun));
+    region.addEventListener('mouseleave', hideTooltip);
+
+    overlay.appendChild(region);
+  });
+}
+
+// ========================================
+// TOOLTIP
+// ========================================
+
+const tooltip = document.getElementById('tooltip');
+
+function showTooltip(event, mun) {
+  tooltip.querySelector('.tooltip-title').textContent = mun.name;
+
+  const rect = event.target.getBoundingClientRect();
+  tooltip.style.left = rect.left + rect.width / 2 + 'px';
+  tooltip.style.top = rect.top - 40 + 'px';
+  tooltip.classList.add('show');
+}
+
+function hideTooltip() {
+  tooltip.classList.remove('show');
+}
+
+// ========================================
+// SELECT MUNICIPALITY
+// ========================================
+
+let currentMunId = null;
+
+async function selectMunicipality(munId, munName) {
+  // Убираем предыдущий выбор
+  document.querySelectorAll('.region-overlay').forEach(r => r.classList.remove('active'));
+
+  // Выделяем новый
+  const region = document.querySelector(`[data-mun-id="${munId}"]`);
+  if (region) {
+    region.classList.add('active');
+  }
+
+  currentMunId = munId;
+
+  // Загружаем данные
+  await loadMunicipalityData(munId, munName);
+}
+
+// ========================================
+// LOAD DATA
+// ========================================
+
+async function loadMunicipalityData(munId, munName) {
+  const panel = document.getElementById('info-panel');
+  panel.innerHTML = '<div class="loading">Загрузка данных...</div>';
+
+  try {
+    const currentYear = new Date().getFullYear();
+
+    // Загружаем данные ГИБДД
+    const gibddResponse = await fetch(`/api/gibdd/heatmap?year=${currentYear}`);
+    const gibddData = await gibddResponse.json();
+
+    const munGibdd = gibddData.find(d => d.municipality_id === munId);
+
+    // Загружаем данные услуг
+    const servicesResponse = await fetch(`/api/services-dashboard/data?year=${currentYear}&municipality_id=${munId}`);
+    const servicesData = await servicesResponse.json();
+
+    // Рендерим панель
+    renderMunicipalityPanel(munName, munGibdd, servicesData);
+
+  } catch (error) {
+    console.error('Error loading data:', error);
+    panel.innerHTML = `
+      <div class="info-empty">
+        <div class="info-empty-icon">⚠️</div>
+        <p>Ошибка загрузки данных</p>
+      </div>
+    `;
+  }
+}
+
+// ========================================
+// RENDER PANEL
+// ========================================
+
+function renderMunicipalityPanel(name, gibddData, servicesData) {
+  const panel = document.getElementById('info-panel');
+
+  const totalDTP = gibddData ? gibddData.total : 0;
+  const totalServices = servicesData.kpi ? servicesData.kpi.total_services : 0;
+
+  panel.innerHTML = `
+    <h2>${name}</h2>
+
+    <div class="stat-card">
+      <div class="stat-label">🚗 ДТП за ${new Date().getFullYear()} год</div>
+      <div class="stat-value">${totalDTP.toLocaleString()}</div>
+      ${servicesData.kpi && servicesData.kpi.change_percent ? `
+        <div class="stat-change ${parseFloat(servicesData.kpi.change_percent) < 0 ? 'positive' : 'negative'}">
+          ${parseFloat(servicesData.kpi.change_percent) > 0 ? '↑' : '↓'} ${Math.abs(servicesData.kpi.change_percent)}%
+        </div>
+      ` : ''}
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">📊 Услуг оказано</div>
+      <div class="stat-value">${totalServices.toLocaleString()}</div>
+      ${servicesData.kpi && servicesData.kpi.change_percent ? `
+        <div class="stat-change ${parseFloat(servicesData.kpi.change_percent) > 0 ? 'positive' : 'negative'}">
+          ${parseFloat(servicesData.kpi.change_percent) > 0 ? '↑' : '↓'} ${Math.abs(servicesData.kpi.change_percent)}%
+        </div>
+      ` : ''}
+    </div>
+
+    <div style="margin-top: 24px;">
+      <a href="/dashboard?municipality_id=${currentMunId}" class="btn" style="width: 100%; text-align: center;">
+        📈 Подробный отчёт →
+      </a>
+    </div>
+
+    <div style="margin-top: 16px; padding: 12px; background: var(--bg-tertiary); border-radius: 8px; font-size: 12px; color: var(--text-secondary);">
+      <p style="margin: 0;">💡 <strong>Совет:</strong> Кликните на другой регион для сравнения показателей</p>
+    </div>
+  `;
+}
+
+// ========================================
+// INIT
+// ========================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  createInteractiveMap();
+
+  // Автоматически выбираем Липецк через 500мс
+  setTimeout(() => {
+    selectMunicipality(1, 'г. Липецк');
+  }, 500);
+});
+</script>
+
+</body>
+</html>
