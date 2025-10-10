@@ -225,6 +225,12 @@
     makeLegend(min, max);
 
     geoLayer = L.geoJSON(geojson, {
+      filter: (feature)=>{
+        // Обрабатываем только полигоны с названиями
+        const hasName = feature.properties && (feature.properties['name:ru'] || feature.properties.name);
+        const isPolygon = feature.geometry && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon');
+        return hasName && isPolygon;
+      },
       style: (feature)=>{
         const gName = feature.properties['name:ru'] || feature.properties.name;
         const r = gibddByMun.get(normalizeName(gName));
@@ -236,10 +242,7 @@
       },
       onEachFeature: (feature, layer)=>{
         const displayName = feature.properties['name:ru'] || feature.properties.name;
-        if (!displayName) {
-          console.warn('Нет названия для:', feature.properties);
-        }
-        layer.bindTooltip(displayName || 'Без названия', {
+        layer.bindTooltip(displayName, {
           permanent: false,
           sticky: true,
           direction: 'top',

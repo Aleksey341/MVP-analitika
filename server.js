@@ -42,7 +42,7 @@ app.use(
         scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
         scriptSrcAttr: ["'unsafe-inline'"],
         fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net'],
-        imgSrc: ["'self'", 'data:'],
+        imgSrc: ["'self'", 'data:', 'https://*.tile.openstreetmap.org'],
         connectSrc: ["'self'", 'https://cdn.jsdelivr.net'],
       },
     },
