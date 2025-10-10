@@ -1,419 +1,380 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Отчётность — главная</title>
-  <link rel="stylesheet" href="/no-badge.css" />
+  <link rel="stylesheet" href="/no-badge.css"/>
+
   <style>
-    :root {
+    /* ======= Тема и токены ======= */
+    :root{
       color-scheme: dark light;
-      --bg-primary: #0f1115;
-      --bg-secondary: #161a22;
-      --border: #232a36;
-      --text-primary: #e8eef7;
-      --text-secondary: #a7b3c6;
-      --text-muted: #6a7789;
-      --accent-blue: #2563eb;
-      --accent-blue-light: #8ab4ff;
+      --bg:#0f1115; --bg-2:#161a22; --text:#e8eef7; --muted:#a7b3c6; --muted-2:#6a7789;
+      --border:#232a36; --accent:#2563eb; --accent-2:#8ab4ff;
+      --card-shadow: 0 8px 24px rgba(37,99,235,.18);
     }
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg-primary);color:var(--text-primary)}
-    a{color:var(--accent-blue-light);text-decoration:none} a:hover{text-decoration:underline}
-    header,main{max-width:960px;margin:auto;padding:24px}
-    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:16px}
+    :root[data-theme="light"]{
+      --bg:#ffffff; --bg-2:#f8fafc; --text:#0f172a; --muted:#475569; --muted-2:#64748b;
+      --border:#e2e8f0; --accent:#2563eb; --accent-2:#1d4ed8;
+      --card-shadow: 0 10px 24px rgba(2,8,23,.08);
+    }
+
+    /* ======= Базовая типографика ======= */
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font: 14px/1.45 system-ui,-apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    a{color:var(--accent-2); text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    .container{max-width:960px; margin:auto; padding:24px}
+
+    /* ======= Шапка ======= */
+    .app-header{position:sticky; top:0; z-index:10; background:var(--bg); border-bottom:1px solid var(--border)}
+    .toolbar{
+      margin:12px auto; padding:0 16px; max-width:960px;
+      display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:12px; align-items:center;
+    }
+    .user-link{
+      color:var(--accent-2); font-weight:700; text-decoration:none;
+      display:inline-flex; align-items:center; justify-content:flex-start;
+      height:40px; border-radius:10px; border:1px solid transparent; padding:0 4px;
+    }
+    .user-link:hover{text-decoration:underline}
+
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      height:40px; width:200px; /* одинаковая ширина */
+      padding:0 16px; border-radius:10px;
+      background:var(--bg-2); border:1px solid var(--border); color:var(--text);
+      font-weight:600; cursor:pointer; user-select:none;
+      transition:background .15s ease, transform .02s ease;
+    }
+    .btn:hover{background:color-mix(in oklab, var(--bg-2) 80%, var(--accent) 20%)}
+    .btn:active{transform:translateY(1px)}
+    .btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+    .icon{font-size:16px; line-height:1}
+
+    @media (max-width:560px){
+      .toolbar{grid-auto-flow:row; grid-auto-rows:1fr}
+      .btn{width:100%}
+    }
+
+    /* ======= Карточки ======= */
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap:16px; margin-top:16px
+    }
     .card{
-      background:var(--bg-secondary);
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:20px;
-      position:relative;
-      overflow:hidden;
-      transition:all 0.3s ease;
-      cursor:pointer;
+      background:var(--bg-2); border:1px solid var(--border); border-radius:12px;
+      padding:20px; position:relative; overflow:hidden; cursor:pointer;
+      transition:transform .25s ease, border-color .25s ease, box-shadow .25s ease;
     }
     .card::before{
-      content:'';
-      position:absolute;
-      top:0;
-      left:0;
-      width:100%;
-      height:4px;
-      background:linear-gradient(90deg,#1b6fff,#8ab4ff);
-      transform:scaleX(0);
-      transition:transform 0.3s ease;
+      content:""; position:absolute; inset:0 0 auto 0; height:4px;
+      background:linear-gradient(90deg,#1b6fff,#8ab4ff); transform:scaleX(0);
+      transition:transform .25s ease; transform-origin:left center;
     }
-    .card:hover{
-      transform:translateY(-4px);
-      box-shadow:0 8px 24px rgba(37,99,235,0.2);
-      border-color:var(--accent-blue);
-    }
-    .card:hover::before{
-      transform:scaleX(1);
-    }
-    .card-icon{
-      font-size:2.5rem;
-      margin-bottom:12px;
-      opacity:0.9;
-      display:inline-block;
-      transition:transform 0.3s ease;
-    }
-    .card:hover .card-icon{
-      transform:scale(1.1);
-    }
-    .card h3{
-      margin:0 0 8px 0;
-      font-size:1.1rem;
-    }
-    .card p{
-      margin:0 0 16px 0;
-      font-size:0.9rem;
-      line-height:1.5;
-    }
-    .card-link{
-      color:var(--accent-blue-light);
-      font-weight:500;
-      display:inline-flex;
-      align-items:center;
-      gap:4px;
-      transition:gap 0.3s ease;
-    }
-    .card:hover .card-link{
-      gap:8px;
-    }
-    .muted{color:var(--text-secondary)}
-    .stat{font-size:2rem;font-weight:700}
-    footer{opacity:.7;padding:24px;text-align:center}
+    .card:hover{ transform:translateY(-4px); border-color:var(--accent); box-shadow:var(--card-shadow) }
+    .card:hover::before{ transform:scaleX(1) }
+    .card-icon{ font-size:2.25rem; margin-bottom:10px; display:inline-block; opacity:.9; transition:transform .25s ease }
+    .card:hover .card-icon{ transform:scale(1.08) }
+    .card h3{ margin:0 0 8px; font-size:1.08rem }
+    .card p{ margin:0 0 14px; font-size:.92rem; color:var(--muted) }
+    .card-link{ color:var(--accent-2); font-weight:600; display:inline-flex; align-items:center; gap:4px; transition:gap .25s ease }
+    .card:hover .card-link{ gap:8px }
 
-    /* Login modal styles */
+    .muted{color:var(--muted)}
+    footer{opacity:.75; padding:24px; text-align:center}
+
+    /* ======= Модалка логина ======= */
     .modal-overlay{
-      display:none;
-      position:fixed;
-      top:0;
-      left:0;
-      right:0;
-      bottom:0;
-      background:rgba(0,0,0,0.85);
-      z-index:1000;
-      align-items:center;
-      justify-content:center;
-      backdrop-filter:blur(4px);
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.85);
+      z-index:1000; align-items:center; justify-content:center; backdrop-filter:blur(4px);
     }
-    .modal-overlay.show{
-      display:flex;
-      animation:fadeIn 0.2s ease;
-    }
-    @keyframes fadeIn{
-      from{opacity:0}
-      to{opacity:1}
-    }
-    .modal{
-      background:var(--bg-secondary);
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:32px;
-      min-width:400px;
-      max-width:90%;
-      animation:slideDown 0.3s ease;
-    }
-    @keyframes slideDown{
-      from{
-        transform:translateY(-20px);
-        opacity:0;
-      }
-      to{
-        transform:translateY(0);
-        opacity:1;
-      }
-    }
-    .modal h2{margin:0 0 24px 0;color:var(--text-primary)}
-    .ctl{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
-    label{font-size:13px;font-weight:500;color:var(--text-secondary)}
-    select,input[type="password"],input[type="text"]{background:var(--bg-primary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);padding:12px;width:100%;box-sizing:border-box}
-    select:focus,input[type="password"]:focus,input[type="text"]:focus{outline:none;border-color:var(--accent-blue)}
-    .password-wrapper{position:relative}
-    .password-wrapper input{padding-right:40px}
-    .toggle-password{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--text-secondary);user-select:none}
-    .toggle-password:hover{color:var(--accent-blue-light)}
-    button{background:linear-gradient(135deg,#1b6fff 0%,#1554d1 100%);border:0;color:#fff;padding:12px 20px;border-radius:8px;cursor:pointer;font-weight:600;width:100%;margin-top:8px}
-    button:hover{opacity:0.9}
-    .modal-error{color:#ff6b6b;font-size:14px;margin-top:12px;display:none}
-    .modal-error.show{display:block}
-    .hidden{display:none !important}
+    .modal-overlay.show{ display:flex; animation:fadeIn .2s ease }
+    @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
 
-    /* User info header */
-    .user-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-    .user-info{color:var(--text-secondary);font-size:14px}
-    .user-info strong{color:var(--accent-blue-light)}
-    .btn-logout{
-      background:var(--bg-tertiary);
-      padding:8px 16px;
-      border-radius:6px;
-      font-size:14px;
-      cursor:pointer;
-      border:1px solid var(--border);
-      color:var(--text-primary);
-      transition:all 0.2s ease;
+    .modal{
+      background:var(--bg-2); border:1px solid var(--border); border-radius:12px;
+      padding:32px; min-width:400px; max-width:92vw; animation:drop .25s ease;
     }
-    .btn-logout:hover{
-      background:var(--border);
-      border-color:var(--accent-blue);
+    @keyframes drop{ from{transform:translateY(-16px); opacity:.5} to{transform:none; opacity:1} }
+
+    .modal h2{ margin:0 0 18px }
+    .ctl{ display:flex; flex-direction:column; gap:6px; margin-bottom:14px }
+    label{ font-size:13px; font-weight:600; color:var(--muted) }
+    select, input[type="password"], input[type="text"]{
+      background:var(--bg); border:1px solid var(--border); border-radius:8px;
+      color:var(--text); padding:12px; width:100%;
     }
+    select:focus, input[type="password"]:focus, input[type="text"]:focus{ outline:none; border-color:var(--accent) }
+    .password-wrapper{ position:relative }
+    .password-wrapper input{ padding-right:40px }
+    .toggle-password{
+      position:absolute; right:12px; top:50%; transform:translateY(-50%);
+      color:var(--muted); cursor:pointer; user-select:none;
+    }
+    .toggle-password:hover{ color:var(--accent-2) }
+    .btn-primary{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:100%; height:44px; border-radius:10px; border:0;
+      background:linear-gradient(135deg,#1b6fff 0%,#1554d1 100%); color:#fff; font-weight:700; cursor:pointer;
+    }
+    .btn-primary:hover{ opacity:.92 }
+    .modal-error{ color:#ff6b6b; font-size:14px; margin-top:10px; display:none }
+    .modal-error.show{ display:block }
+    .hidden{ display:none !important }
   </style>
 </head>
+
 <body>
+  <!-- ======= ШАПКА (унифицированные кнопки одинаковой ширины) ======= -->
+  <header class="app-header" role="banner">
+    <div class="toolbar" role="group" aria-label="Панель действий">
+      <a class="user-link" id="user-link" href="/profile">Администратор</a>
 
-<!-- Login Modal -->
-<div class="modal-overlay" id="modal-login">
-  <div class="modal">
-    <h2>Авторизация</h2>
-    <div class="ctl">
-      <label for="login-municipality">Муниципалитет</label>
-      <select id="login-municipality">
-        <option value="">Загрузка...</option>
-      </select>
-    </div>
-    <div class="ctl">
-      <label for="login-password">Пароль</label>
-      <div class="password-wrapper">
-        <input type="password" id="login-password" />
-        <span class="toggle-password" id="toggle-password">👁️</span>
-      </div>
-    </div>
-    <div class="modal-error" id="login-error"></div>
-    <button id="btn-modal-login">Войти</button>
-    <div style="text-align:center;margin-top:16px">
-      <a href="/change-password.html" style="color:var(--accent-blue-light);font-size:14px;text-decoration:none">Сменить пароль</a>
-    </div>
-  </div>
-</div>
+      <button id="themeBtn" class="btn" type="button" aria-pressed="false" title="Переключить тему">
+        <span class="icon" aria-hidden="true">🌞</span>
+        <span class="label">Светлая тема</span>
+      </button>
 
-<div id="main-content" class="hidden">
-  <header>
-    <div class="user-header">
-      <h1>Система отчётности</h1>
-      <div style="display:flex;gap:12px;align-items:center">
-        <div class="user-info">
-          <strong id="user-name">—</strong>
-        </div>
-        <button id="themeToggle" class="btn-logout">🌙 Темная тема</button>
-        <button class="btn-logout" id="btn-logout">Выйти</button>
-      </div>
-    </div>
-    <p class="muted">Быстрые ссылки:</p>
-    <div class="cards" id="cards-container">
-      <!-- Cards will be dynamically added based on role -->
+      <button id="btn-logout" class="btn" type="button">Выйти</button>
     </div>
   </header>
 
-</div>
+  <!-- ======= МОДАЛКА ВХОДА ======= -->
+  <div class="modal-overlay" id="modal-login" aria-modal="true" role="dialog" aria-labelledby="login-title">
+    <div class="modal">
+      <h2 id="login-title">Авторизация</h2>
 
-<footer>
-  <span class="muted">© АНО "Область Будущего"</span>
-</footer>
+      <div class="ctl">
+        <label for="login-municipality">Муниципалитет</label>
+        <select id="login-municipality" autocomplete="off">
+          <option value="">Загрузка...</option>
+        </select>
+      </div>
 
-<script>
-const $ = (s) => document.querySelector(s);
-let currentUser = null;
+      <div class="ctl">
+        <label for="login-password">Пароль</label>
+        <div class="password-wrapper">
+          <input type="password" id="login-password" autocomplete="current-password"/>
+          <span class="toggle-password" id="toggle-password" title="Показать/скрыть пароль">👁️</span>
+        </div>
+      </div>
 
-// Check auth on page load
-async function checkAuth(){
-  try{
-    const r = await fetch('/api/auth/me', {credentials: 'include'});
-    if(r.ok){
-      const data = await r.json();
-      currentUser = data.user || data; // Handle both {user: {...}} and direct object
+      <div class="modal-error" id="login-error"></div>
+      <button id="btn-modal-login" class="btn-primary">Войти</button>
 
-      // Check if password reset is required
-      if(currentUser.password_reset_required){
-        window.location.href = '/change-password.html?required=true';
+      <div style="text-align:center; margin-top:14px">
+        <a href="/change-password.html" style="color:var(--accent-2); font-size:14px">Сменить пароль</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= КОНТЕНТ ======= -->
+  <main id="main-content" class="container hidden">
+    <h1 style="margin:0 0 6px">Система отчётности</h1>
+    <p class="muted" style="margin:0 0 12px">Быстрые ссылки:</p>
+
+    <div class="cards" id="cards-container"><!-- динамические карточки --></div>
+  </main>
+
+  <footer>
+    <span class="muted">© АНО «Область Будущего»</span>
+  </footer>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    let currentUser = null;
+
+    /* ======= Тема (переключатель) ======= */
+    (function setupTheme(){
+      const root = document.documentElement;
+      const btn  = $('#themeBtn');
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const current = saved || (prefersDark ? 'dark' : 'dark'); // стартуем в тёмной как раньше
+      applyTheme(current);
+
+      btn.addEventListener('click', () => {
+        const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+        localStorage.setItem('theme', next);
+      });
+
+      function applyTheme(theme){
+        root.dataset.theme = theme;
+        const isDark = theme === 'dark';
+        // кнопка всегда 200px — только текст/иконка меняются
+        btn.setAttribute('aria-pressed', String(isDark));
+        btn.querySelector('.icon').textContent  = isDark ? '🌙' : '🌞';
+        btn.querySelector('.label').textContent = isDark ? 'Тёмная тема' : 'Светлая тема';
+      }
+    })();
+
+    /* ======= API: статус сессии ======= */
+    async function checkAuth(){
+      try{
+        const r = await fetch('/api/auth/me',{credentials:'include'});
+        if(!r.ok) return false;
+        const data = await r.json();
+        currentUser = data.user || data;
+
+        if(currentUser?.password_reset_required){
+          location.href = '/change-password.html?required=true';
+          return false;
+        }
+        return true;
+      }catch(e){
+        console.error('checkAuth:', e);
         return false;
       }
-
-      return true;
-    } else {
-      return false;
     }
-  }catch(e){
-    console.error('checkAuth:', e);
-    return false;
-  }
-}
 
-// Show login modal
-async function showLoginModal(){
-  $('#modal-login').classList.add('show');
-  $('#login-password').value = '';
-  $('#login-error').classList.remove('show');
+    /* ======= Заполнение селекта МУПов в модалке ======= */
+    async function loadMunicipalities(){
+      try{
+        const r = await fetch('/api/municipalities/all');
+        if(!r.ok) throw new Error('load municipalities failed');
+        const rows = await r.json();
+        const sel = $('#login-municipality');
+        sel.innerHTML = '<option value="">— Выберите муниципалитет —</option>'
+                      + '<option value="admin">Администратор</option>'
+                      + '<option value="governor">Губернатор Липецкой области</option>';
+        rows.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.id; opt.textContent = m.name; sel.appendChild(opt);
+        });
+      }catch(e){
+        console.error('loadMunicipalities:', e);
+        $('#login-municipality').innerHTML = '<option value="">Ошибка загрузки</option>';
+      }
+    }
 
-  // Load municipalities
-  await loadLoginMunicipalities();
-  setTimeout(() => $('#login-municipality').focus(), 100);
-}
+    /* ======= Login / Logout ======= */
+    async function login(municipality_id, password){
+      try{
+        const r = await fetch('/api/auth/login',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          credentials:'include',
+          body:JSON.stringify({municipality_id,password})
+        });
 
-async function loadLoginMunicipalities(){
-  try {
-    const r = await fetch('/api/municipalities/all');
-    if(!r.ok) throw new Error('Failed to load municipalities');
+        if(!r.ok){
+          const err = await r.json().catch(()=>({}));
+          throw new Error(err.message || 'Ошибка авторизации');
+        }
 
-    const rows = await r.json();
-    const sel = $('#login-municipality');
-    sel.innerHTML = '<option value="">-- Выберите муниципалитет --</option>';
-    sel.innerHTML += '<option value="admin">Администратор</option>';
-    sel.innerHTML += '<option value="governor">Губернатор Липецкой области</option>';
+        const data = await r.json();
+        currentUser = data.user || data;
 
-    rows.forEach(row => {
-      const opt = document.createElement('option');
-      opt.value = row.id;
-      opt.textContent = row.name;
-      sel.appendChild(opt);
-    });
-  } catch(e) {
-    console.error('loadLoginMunicipalities:', e);
-    $('#login-municipality').innerHTML = '<option value="">Ошибка загрузки</option>';
-  }
-}
+        if(currentUser.password_reset_required){
+          location.href = '/change-password.html?required=true';
+          return;
+        }
 
-// Login
-async function login(municipalityId, password){
-  try{
-    const r = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      credentials: 'include',
-      body: JSON.stringify({municipality_id: municipalityId, password})
-    });
+        $('#modal-login').classList.remove('show');
+        updateUI();
+      }catch(e){
+        const el = $('#login-error');
+        el.textContent = e.message || 'Ошибка соединения';
+        el.classList.add('show');
+      }
+    }
 
-    if(r.ok){
-      const data = await r.json();
-      currentUser = data.user;
+    async function logout(){
+      try{ await fetch('/api/auth/logout',{method:'POST',credentials:'include'}); }
+      finally{ location.reload(); }
+    }
 
-      // Check if password reset is required
-      if(currentUser.password_reset_required){
-        window.location.href = '/change-password.html?required=true';
+    /* ======= UI ======= */
+    function updateUI(){
+      $('#main-content').classList.remove('hidden');
+
+      // Имя в левой части шапки
+      const userName =
+        currentUser?.role === 'governor' ? 'Губернатор Липецкой области' :
+        (currentUser?.municipality_name || 'Администратор');
+
+      $('#user-link').textContent = userName;
+      $('#user-link').href = '/profile';
+
+      // Карточки
+      const cardsContainer = $('#cards-container');
+      cardsContainer.innerHTML = '';
+
+      const operator = [
+        {title:'Форма 1-ГМУ', desc:'Внесение ежемесячных показателей.', href:'/form', icon:'📝'},
+        {title:'Статистика ГИБДД', desc:'ДТП и сопутствующая статистика.', href:'/gibdd', icon:'🚗'},
+        {title:'Финансы Муниципалитеты', desc:'Финансовые показатели.', href:'/finance', icon:'💰'},
+      ];
+      const adminOnly = {title:'Общий дашборд', desc:'Агрегированная статистика.', href:'/dashboard', icon:'📊'};
+
+      let list = [];
+      if(currentUser?.role === 'admin') list = [...operator, adminOnly];
+      else if(currentUser?.role === 'governor') list = [adminOnly];
+      else list = operator;
+
+      list.forEach(c=>{
+        const el = document.createElement('a');
+        el.href = c.href; el.className='card';
+        el.innerHTML = `
+          <div class="card-icon" aria-hidden="true">${c.icon}</div>
+          <h3>${c.title}</h3>
+          <p>${c.desc}</p>
+          <span class="card-link">Открыть →</span>
+        `;
+        cardsContainer.appendChild(el);
+      });
+    }
+
+    /* ======= Слушатели ======= */
+    $('#btn-modal-login').addEventListener('click', async ()=>{
+      const m = $('#login-municipality').value.trim();
+      const p = $('#login-password').value.trim();
+      if(!m || !p){
+        const el = $('#login-error');
+        el.textContent = 'Выберите муниципалитет и введите пароль';
+        el.classList.add('show');
         return;
       }
+      await login(m,p);
+    });
 
-      $('#modal-login').classList.remove('show');
-      updateUI();
-    } else {
-      const err = await r.json();
-      $('#login-error').textContent = err.message || 'Ошибка авторизации';
-      $('#login-error').classList.add('show');
-    }
-  }catch(e){
-    console.error('login:', e);
-    $('#login-error').textContent = 'Ошибка соединения';
-    $('#login-error').classList.add('show');
-  }
-}
+    $('#login-password').addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){ e.preventDefault(); $('#btn-modal-login').click(); }
+    });
 
-// Logout
-async function logout(){
-  try{
-    await fetch('/api/auth/logout', {method: 'POST', credentials: 'include'});
-    window.location.reload();
-  }catch(e){
-    console.error('logout:', e);
-  }
-}
+    $('#toggle-password').addEventListener('click', ()=>{
+      const i = $('#login-password');
+      const t = $('#toggle-password');
+      const isPwd = i.type === 'password';
+      i.type = isPwd ? 'text' : 'password';
+      t.textContent = isPwd ? '🙈' : '👁️';
+    });
 
-// Update UI based on user role
-function updateUI(){
-  $('#main-content').classList.remove('hidden');
+    $('#btn-logout').addEventListener('click', logout);
 
-  // Display name based on role
-  if(currentUser.role === 'governor'){
-    $('#user-name').textContent = 'Губернатор Липецкой области';
-  } else {
-    $('#user-name').textContent = currentUser.municipality_name || 'Администратор';
-  }
-
-  const cardsContainer = $('#cards-container');
-  cardsContainer.innerHTML = '';
-
-  // Cards available for operators (municipalities)
-  const operatorCards = [
-    {title: 'Форма 1-ГМУ', desc: 'Внесение ежемесячных показателей.', href: '/form', icon: '📝'},
-    {title: 'Статистика ГИБДД', desc: 'Статистика дорожно-транспортных происшествий.', href: '/gibdd', icon: '🚗'},
-    {title: 'Финансы Муниципалитеты', desc: 'Финансовые показатели муниципалитетов.', href: '/finance', icon: '💰'}
-  ];
-
-  // Admin-only card
-  const adminCard = {title: 'Общий дашборд', desc: 'Агрегированная статистика по всем направлениям.', href: '/dashboard', icon: '📊'};
-
-  let cards = [];
-  if(currentUser.role === 'admin'){
-    // Admin sees all cards
-    cards = [...operatorCards, adminCard];
-  } else if(currentUser.role === 'governor'){
-    // Governor sees only dashboard
-    cards = [adminCard];
-  } else {
-    // Operators see only their cards
-    cards = operatorCards;
-  }
-
-  cards.forEach(card => {
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.innerHTML = `
-      <div class="card-icon">${card.icon}</div>
-      <h3>${card.title}</h3>
-      <p>${card.desc}</p>
-      <a href="${card.href}" class="card-link">Открыть →</a>
-    `;
-    cardsContainer.appendChild(div);
-  });
-}
-
-// Event listeners
-$('#btn-modal-login').addEventListener('click', async () => {
-  const municipalityId = $('#login-municipality').value;
-  const password = $('#login-password').value;
-
-  if(!municipalityId || !password){
-    $('#login-error').textContent = 'Выберите муниципалитет и введите пароль';
-    $('#login-error').classList.add('show');
-    return;
-  }
-
-  await login(municipalityId, password);
-});
-
-$('#login-password').addEventListener('keypress', e => {
-  if(e.key === 'Enter'){
-    e.preventDefault();
-    $('#btn-modal-login').click();
-  }
-});
-
-$('#btn-logout').addEventListener('click', logout);
-
-// Toggle password visibility
-$('#toggle-password').addEventListener('click', () => {
-  const input = $('#login-password');
-  const toggle = $('#toggle-password');
-
-  if(input.type === 'password'){
-    input.type = 'text';
-    toggle.textContent = '🙈';
-  } else {
-    input.type = 'password';
-    toggle.textContent = '👁️';
-  }
-});
-
-// Initialize
-(async function init(){
-  const isAuth = await checkAuth();
-
-  if(!isAuth){
-    showLoginModal();
-  } else {
-    updateUI();
-  }
-})();
-</script>
-<script src="/theme.js"></script>
+    /* ======= Инициализация ======= */
+    (async function init(){
+      const ok = await checkAuth();
+      if(!ok){
+        await loadMunicipalities();
+        $('#login-password').value = '';
+        $('#login-error').classList.remove('show');
+        $('#modal-login').classList.add('show');
+        setTimeout(()=>$('#login-municipality')?.focus(), 60);
+      }else{
+        updateUI();
+      }
+    })();
+  </script>
 </body>
 </html>
