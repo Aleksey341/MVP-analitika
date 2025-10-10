@@ -23,6 +23,7 @@ const PORT = Number(process.env.PORT || 8080);
 /* ----------------------- пути фронта ----------------------- */
 const FRONT_DIST = path.join(__dirname, 'frontend', 'dist');
 const INDEX_HTML = path.join(FRONT_DIST, 'index.html');
+const PUBLIC_DIR = path.join(__dirname, 'public'); // НОВОЕ: корень статических html
 
 /* ----------------------- утилиты ----------------------- */
 function logSql(tag, sql, params = []) {
@@ -699,11 +700,22 @@ app.get('/api/debug/frontend', (_req, res) => {
 });
 
 /* ============================ СТАТИКА ============================ */
-app.use(express.static(path.join(__dirname, 'public')));
+/* 1) public: автоподстановка .html ( /form → /public/form.html ), index.html по папкам */
+app.use(express.static(PUBLIC_DIR, { extensions: ['html'], index: 'index.html', fallthrough: true }));
+/* 2) сборка фронта */
 app.use(express.static(FRONT_DIST));
 
 /* ============================ SPA FALLBACK ============================ */
-app.get(/^(?!\/api\/).*/, (_req, res) => {
+/* Только для НЕ-/api/* */
+app.get(/^(?!\/api\/).*/, (req, res) => {
+  // если есть соответствующий .html в /public — отдать его
+  const candidate = path.join(
+    PUBLIC_DIR,
+    req.path.endsWith('/') ? req.path + 'index.html' : req.path + '.html'
+  );
+  if (fs.existsSync(candidate)) return res.sendFile(candidate);
+
+  // иначе — SPA из frontend/dist
   if (!fs.existsSync(INDEX_HTML)) {
     console.error('[SPA Fallback] index.html NOT FOUND at', INDEX_HTML);
     return res.status(404).send(
@@ -712,7 +724,7 @@ app.get(/^(?!\/api\/).*/, (_req, res) => {
        <p>Looking for: ${INDEX_HTML}</p>`
     );
   }
-  res.sendFile(INDEX_HTML);
+  return res.sendFile(INDEX_HTML);
 });
 
 /* ============================ ГЛОБАЛЬНЫЕ ОШИБКИ ============================ */
