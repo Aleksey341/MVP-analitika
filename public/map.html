@@ -108,6 +108,23 @@
       font-weight: 600;
     }
 
+    .city-label {
+      font-size: 14px;
+      font-weight: 700;
+      fill: var(--text-primary);
+      text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+    }
+
+    .region.city {
+      fill: var(--accent-blue);
+      stroke: var(--text-primary);
+      stroke-width: 3;
+    }
+
+    .region.city:hover {
+      fill: var(--success);
+    }
+
     .info-panel {
       background: var(--bg-secondary);
       border: 1px solid var(--border);
@@ -254,8 +271,92 @@
 
 <main>
   <div class="map-container">
-    <svg class="map-svg" viewBox="0 0 800 600" id="map">
-      <!-- SVG карта будет здесь -->
+    <svg class="map-svg" viewBox="0 0 1000 800" id="map">
+      <!-- Липецкая область - реальные границы муниципалитетов -->
+
+      <!-- Усманский район (северо-запад) -->
+      <path class="region" data-mun-id="17" data-mun-name="Усманский район"
+        d="M 50,150 L 150,120 L 220,140 L 250,200 L 200,280 L 120,300 L 80,250 Z" />
+
+      <!-- Данковский район (север) -->
+      <path class="region" data-mun-id="4" data-mun-name="Данковский район"
+        d="M 250,50 L 350,40 L 420,80 L 450,140 L 400,200 L 320,180 L 250,130 Z" />
+
+      <!-- Лебедянский район (северо-центр) -->
+      <path class="region" data-mun-id="12" data-mun-name="Лебедянский район"
+        d="M 250,200 L 320,180 L 400,200 L 420,260 L 380,320 L 300,340 L 250,280 Z" />
+
+      <!-- Липецкий район + г. Липецк (центр) -->
+      <path class="region" data-mun-id="14" data-mun-name="Липецкий район"
+        d="M 300,340 L 380,320 L 450,360 L 480,420 L 440,500 L 360,520 L 300,480 Z" />
+
+      <!-- г. Липецк (в центре Липецкого района) -->
+      <circle class="region city" data-mun-id="1" data-mun-name="г. Липецк"
+        cx="400" cy="420" r="35" />
+
+      <!-- Грязинский район (центр-юг) -->
+      <path class="region" data-mun-id="3" data-mun-name="Грязинский район"
+        d="M 300,480 L 360,520 L 380,580 L 320,640 L 250,620 L 220,560 Z" />
+
+      <!-- Добринский район (запад) -->
+      <path class="region" data-mun-id="5" data-mun-name="Добринский район"
+        d="M 120,300 L 200,280 L 250,340 L 220,420 L 180,500 L 100,480 L 60,400 Z" />
+
+      <!-- Тербунский район (северо-восток) -->
+      <path class="region" data-mun-id="16" data-mun-name="Тербунский район"
+        d="M 450,140 L 550,120 L 620,160 L 640,220 L 580,280 L 480,260 Z" />
+
+      <!-- Задонский район (восток-центр) -->
+      <path class="region" data-mun-id="9" data-mun-name="Задонский район"
+        d="M 480,260 L 580,280 L 620,340 L 600,420 L 540,480 L 480,420 Z" />
+
+      <!-- Лев-Толстовский район (восток) -->
+      <path class="region" data-mun-id="13" data-mun-name="Лев-Толстовский район"
+        d="M 640,220 L 720,180 L 800,220 L 820,300 L 760,360 L 680,340 L 620,280 Z" />
+
+      <!-- Добровский район (восток-центр) -->
+      <path class="region" data-mun-id="6" data-mun-name="Добровский район"
+        d="M 620,340 L 680,340 L 760,360 L 780,440 L 720,520 L 640,500 L 600,420 Z" />
+
+      <!-- Становлянский район (крайний восток) -->
+      <path class="region" data-mun-id="15" data-mun-name="Становлянский район"
+        d="M 780,440 L 860,400 L 940,440 L 950,520 L 880,580 L 800,560 L 760,500 Z" />
+
+      <!-- Хлевенский район (юго-восток) -->
+      <path class="region" data-mun-id="18" data-mun-name="Хлевенский район"
+        d="M 540,480 L 640,500 L 680,560 L 660,640 L 580,680 L 500,660 L 480,600 Z" />
+
+      <!-- Долгоруковский район (восток-юг) -->
+      <path class="region" data-mun-id="7" data-mun-name="Долгоруковский район"
+        d="M 680,560 L 760,500 L 840,540 L 860,620 L 800,680 L 720,700 L 660,640 Z" />
+
+      <!-- Елецкий район + г. Елец (юг) -->
+      <path class="region" data-mun-id="8" data-mun-name="Елецкий район"
+        d="M 480,600 L 580,680 L 600,740 L 540,780 L 460,760 L 400,720 L 380,660 Z" />
+
+      <!-- г. Елец (в центре Елецкого района) -->
+      <circle class="region city" data-mun-id="2" data-mun-name="г. Елец"
+        cx="500" cy="700" r="35" />
+
+      <!-- Измалковский район (крайний юго-восток) -->
+      <path class="region" data-mun-id="10" data-mun-name="Измалковский район"
+        d="M 660,640 L 720,700 L 760,760 L 700,800 L 620,780 L 600,740 Z" />
+
+      <!-- Краснинский район (юго-запад) -->
+      <path class="region" data-mun-id="11" data-mun-name="Краснинский район"
+        d="M 250,620 L 320,640 L 380,680 L 360,740 L 280,780 L 200,760 L 180,700 Z" />
+
+      <!-- Воловский район (крайний юго-запад) -->
+      <path class="region" data-mun-id="19" data-mun-name="Воловский район"
+        d="M 180,700 L 200,760 L 180,800 L 100,800 L 50,760 L 80,700 L 120,680 Z" />
+
+      <!-- Чаплыгинский район (крайний север) -->
+      <path class="region" data-mun-id="20" data-mun-name="Чаплыгинский район"
+        d="M 350,40 L 450,20 L 550,50 L 550,120 L 480,140 L 400,120 Z" />
+
+      <!-- Подписи для городов -->
+      <text x="400" y="385" class="region-label city-label">Липецк</text>
+      <text x="500" y="665" class="region-label city-label">Елец</text>
     </svg>
 
     <div class="legend">
@@ -293,65 +394,19 @@
 
 <script>
 // ========================================
-// MUNICIPALITIES DATA
+// INIT MAP EVENTS
 // ========================================
 
-const municipalities = [
-  // Координаты примерные, нужно будет уточнить
-  { id: 1, name: 'г. Липецк', x: 400, y: 200, color: '#ef4444' },
-  { id: 2, name: 'г. Елец', x: 500, y: 450, color: '#f59e0b' },
-  { id: 3, name: 'Грязинский район', x: 350, y: 280, color: '#10b981' },
-  { id: 4, name: 'Данковский район', x: 280, y: 100, color: '#10b981' },
-  { id: 5, name: 'Добринский район', x: 200, y: 320, color: '#10b981' },
-  { id: 6, name: 'Добровский район', x: 550, y: 220, color: '#10b981' },
-  { id: 7, name: 'Долгоруковский район', x: 650, y: 350, color: '#10b981' },
-  { id: 8, name: 'Елецкий район', x: 580, y: 480, color: '#f59e0b' },
-  { id: 9, name: 'Задонский район', x: 480, y: 320, color: '#10b981' },
-  { id: 10, name: 'Измалковский район', x: 700, y: 480, color: '#10b981' },
-  { id: 11, name: 'Краснинский район', x: 300, y: 480, color: '#10b981' },
-  { id: 12, name: 'Лебедянский район', x: 320, y: 180, color: '#f59e0b' },
-  { id: 13, name: 'Лев-Толстовский район', x: 630, y: 120, color: '#10b981' },
-  { id: 14, name: 'Липецкий район', x: 380, y: 140, color: '#f59e0b' },
-  { id: 15, name: 'Становлянский район', x: 720, y: 220, color: '#10b981' },
-  { id: 16, name: 'Тербунский район', x: 550, y: 100, color: '#10b981' },
-  { id: 17, name: 'Усманский район', x: 200, y: 180, color: '#10b981' },
-  { id: 18, name: 'Хлевенский район', x: 440, y: 420, color: '#10b981' }
-];
+function initMap() {
+  const regions = document.querySelectorAll('.region');
 
-// ========================================
-// CREATE SVG MAP
-// ========================================
+  regions.forEach(region => {
+    const munId = parseInt(region.dataset.munId);
+    const munName = region.dataset.munName;
 
-function createMap() {
-  const svg = document.getElementById('map');
-
-  municipalities.forEach(mun => {
-    // Создаём круг для каждого муниципалитета
-    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    circle.setAttribute('cx', mun.x);
-    circle.setAttribute('cy', mun.y);
-    circle.setAttribute('r', mun.name.startsWith('г.') ? 40 : 30);
-    circle.classList.add('region');
-    circle.dataset.munId = mun.id;
-    circle.dataset.munName = mun.name;
-
-    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    label.setAttribute('x', mun.x);
-    label.setAttribute('y', mun.y + 5);
-    label.classList.add('region-label');
-    label.textContent = mun.name.replace(' район', '').replace('г. ', '');
-
-    group.appendChild(circle);
-    group.appendChild(label);
-
-    // События
-    circle.addEventListener('click', () => selectMunicipality(mun.id, mun.name));
-    circle.addEventListener('mouseenter', (e) => showTooltip(e, mun));
-    circle.addEventListener('mouseleave', hideTooltip);
-
-    svg.appendChild(group);
+    region.addEventListener('click', () => selectMunicipality(munId, munName));
+    region.addEventListener('mouseenter', (e) => showTooltip(e, { id: munId, name: munName }));
+    region.addEventListener('mouseleave', hideTooltip);
   });
 }
 
@@ -481,7 +536,7 @@ function renderMunicipalityPanel(name, gibddData, servicesData) {
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  createMap();
+  initMap();
 
   // Автоматически выбираем Липецк
   setTimeout(() => {
