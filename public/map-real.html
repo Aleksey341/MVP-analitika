@@ -78,14 +78,18 @@
       width: 100%;
       max-width: 900px;
       margin: 0 auto;
+      min-height: 600px;
     }
 
     .map-image {
       width: 100%;
       height: auto;
+      min-height: 600px;
       display: block;
       border-radius: 8px;
       filter: brightness(1.1) contrast(1.05);
+      object-fit: contain;
+      background: var(--bg-tertiary);
     }
 
     .map-overlay {
@@ -254,10 +258,11 @@
 
     <div class="map-wrapper" id="map-wrapper">
       <!-- Реальная карта Липецкой области -->
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Lipetsk_in_Russia.svg/800px-Lipetsk_in_Russia.svg.png"
+      <img src="https://upload.wikimedia.org/wikipedia/commons/3/35/Lipetsk_in_Russia.svg"
            alt="Карта Липецкой области"
            class="map-image"
-           id="map-image" />
+           id="map-image"
+           crossorigin="anonymous" />
 
       <!-- Интерактивные области (координаты в процентах) -->
       <div class="map-overlay" id="map-overlay">
