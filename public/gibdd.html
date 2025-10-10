@@ -1,596 +1,358 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Статистика ГИБДД - ДТП</title>
-  <link rel="stylesheet" href="/no-badge.css" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ГИБДД — ДТП</title>
+  <link rel="stylesheet" href="/no-badge.css"/>
+
   <style>
-    :root {
+    :root{
       color-scheme: dark light;
-      --bg-primary: #0a0d12;
-      --bg-secondary: #12161c;
-      --bg-tertiary: #1a1d24;
-      --border-primary: #2b3444;
-      --text-primary: #e8eef7;
-      --text-secondary: #9fb0c9;
-      --text-muted: #6a7789;
-      --accent-blue: #5a8fff;
-      --accent-blue-light: #8ab4ff;
+      --bg:#0a0d12; --bg-2:#12161c; --bg-3:#1a1d24;
+      --text:#e8eef7; --muted:#9fb0c9; --muted-2:#6a7789;
+      --border:#2b3444; --accent:#2563eb; --accent-2:#8ab4ff;
+    }
+    :root[data-theme="light"]{
+      --bg:#ffffff; --bg-2:#f8fafc; --bg-3:#eef2f7;
+      --text:#0f172a; --muted:#475569; --muted-2:#64748b;
+      --border:#e2e8f0; --accent:#2563eb; --accent-2:#1d4ed8;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif; background:var(--bg); color:var(--text)}
+
+    /* Header (унифицированный с главной) */
+    .app-header{position:sticky; top:0; z-index:10; background:var(--bg-2); border-bottom:1px solid var(--border)}
+    .toolbar{
+      margin:12px auto; padding:12px 16px; max-width:1400px;
+      display:grid; grid-template-columns:1fr 200px 200px; gap:12px; align-items:center;
+    }
+    .user-link{
+      color:var(--accent-2); font-weight:700; text-decoration:none; height:40px;
+      display:flex; align-items:center; padding:0 4px;
+    }
+    .user-link:hover{text-decoration:underline}
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      height:40px; width:200px; padding:0 16px; border-radius:10px;
+      background:var(--bg-3); border:1px solid var(--border); color:var(--text);
+      font-weight:600; cursor:pointer; transition:background .15s ease, transform .02s ease;
+    }
+    .btn:hover{background:color-mix(in oklab, var(--bg-3) 80%, var(--accent) 20%)}
+    .btn:active{transform:translateY(1px)}
+    .btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+    .icon{font-size:16px}
+
+    @media (max-width:720px){
+      .toolbar{grid-template-columns:1fr; grid-auto-rows:1fr}
+      .btn{width:100%}
     }
 
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-    }
+    /* Page intro */
+    .page-head{max-width:1400px; margin:0 auto; padding:0 16px 12px}
+    .title{margin:0 0 4px; font-size:26px}
+    .subtitle{margin:0; color:var(--muted); font-size:14px}
+    .back{display:inline-block; margin:0 0 6px; color:var(--accent-2); text-decoration:none}
+    .back:hover{text-decoration:underline}
 
-    header {
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border-primary);
-      padding: 24px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+    /* Upload (admin only) */
+    .section{max-width:1400px; margin:16px auto; padding:0 16px}
+    .upload{background:var(--bg-2); border:1px solid var(--border); border-radius:12px; padding:20px}
+    .upload h2{margin:0 0 8px}
+    .drop{
+      background:var(--bg); border:2px dashed var(--border); border-radius:12px; padding:28px; text-align:center;
+      transition:border-color .2s ease, background .2s ease;
     }
-
-    .header-content {
-      max-width: 1400px;
-      margin: auto;
-    }
-
-    h1 {
-      margin: 0 0 8px 0;
-      font-size: 28px;
-      color: var(--text-primary);
-    }
-
-    .subtitle {
-      color: var(--text-secondary);
-      font-size: 14px;
-      margin: 0;
-    }
-
-    main {
-      max-width: 1400px;
-      margin: auto;
-      padding: 24px;
-    }
-
-    a {
-      color: var(--accent-blue-light);
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    /* Upload Section (Admin Only) */
-    .upload-section {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-primary);
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 32px;
-    }
-
-    .upload-section h2 {
-      margin-top: 0;
-      color: var(--text-primary);
-      font-size: 20px;
-    }
-
-    .upload-box {
-      border: 2px dashed var(--border-primary);
-      border-radius: 12px;
-      padding: 32px;
-      text-align: center;
-      background: var(--bg-primary);
-      transition: all 0.3s;
-    }
-
-    .upload-box.dragover {
-      border-color: var(--accent-blue);
-      background: var(--bg-tertiary);
-    }
-
-    .upload-box input[type="file"] {
-      display: none;
-    }
-
-    .upload-btn {
-      background: linear-gradient(135deg, #1b6fff 0%, #1554d1 100%);
-      color: #fff;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: all 0.3s;
-    }
-
-    .upload-btn:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(27, 111, 255, 0.4);
-    }
-
-    .upload-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .upload-result {
-      margin-top: 16px;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 14px;
-      display: none;
-    }
-
-    .upload-result.success {
-      background: #1a3a1a;
-      color: #6fb36f;
-      border: 1px solid #2a5a2a;
-    }
-
-    .upload-result.error {
-      background: #2a1620;
-      color: #ff8a8a;
-      border: 1px solid #6a1b2a;
-    }
+    .drop.dragover{border-color:var(--accent); background:var(--bg-3)}
+    .upload input[type=file]{display:none}
+    .upload .pick{background:linear-gradient(135deg,#1b6fff,#1554d1); color:#fff; border:0; border-radius:10px; height:44px; padding:0 18px; font-weight:700; cursor:pointer}
+    .note{color:var(--muted); margin-top:10px; font-size:13px}
+    .result{margin-top:12px; display:none; padding:10px 12px; border-radius:10px; font-size:14px}
+    .result.ok{display:block; background:#12381a; color:#83d089; border:1px solid #1f5b2d}
+    .result.err{display:block; background:#3b1220; color:#ffa0b0; border:1px solid #6e1f37}
 
     /* Filters */
-    .filters {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-primary);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 24px;
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      align-items: flex-end;
+    .filters{max-width:1400px; margin:16px auto; padding:0 16px}
+    .filter-box{
+      background:var(--bg-2); border:1px solid var(--border); border-radius:12px; padding:16px;
+      display:flex; gap:12px; flex-wrap:wrap; align-items:end;
     }
-
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      min-width: 200px;
+    .fg{display:flex; flex-direction:column; gap:6px; min-width:200px}
+    label{font-size:13px; font-weight:600; color:var(--muted)}
+    select{
+      background:var(--bg); border:1px solid var(--border); border-radius:8px; color:var(--text);
+      height:40px; padding:0 10px;
     }
-
-    label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-secondary);
-    }
-
-    select {
-      background: var(--bg-primary);
-      border: 1px solid var(--border-primary);
-      border-radius: 8px;
-      color: var(--text-primary);
-      padding: 10px 12px;
-      font-size: 14px;
-    }
-
-    select:focus {
-      outline: none;
-      border-color: var(--accent-blue);
-    }
-
-    button.secondary {
-      background: var(--bg-tertiary);
-      color: var(--text-primary);
-      border: 1px solid var(--border-primary);
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    button.secondary:hover {
-      background: var(--border-primary);
-    }
+    select:focus{outline:none; border-color:var(--accent)}
+    .btn-ghost{height:40px; padding:0 16px; border-radius:10px; background:var(--bg-3); border:1px solid var(--border); color:var(--text); cursor:pointer}
+    .btn-ghost:hover{background:color-mix(in oklab, var(--bg-3) 80%, var(--accent) 20%)}
 
     /* Table */
-    .table-container {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-primary);
-      border-radius: 12px;
-      overflow: auto;
-      margin-bottom: 24px;
-      max-height: 600px;
+    .table-wrap{max-width:1400px; margin:16px auto; padding:0 16px}
+    .table{
+      background:var(--bg-2); border:1px solid var(--border); border-radius:12px; overflow:auto; max-height:620px;
     }
+    table{width:100%; border-collapse:collapse}
+    th{
+      position:sticky; top:0; z-index:1; background:var(--bg-3); color:var(--muted); font-size:12px; text-transform:uppercase;
+      letter-spacing:.5px; text-align:left; padding:12px; box-shadow:0 2px 4px rgba(0,0,0,.2);
+    }
+    td{padding:12px; border-top:1px solid var(--border)}
+    tr:hover{background:var(--bg-3)}
+    .center{text-align:center; color:var(--muted-2); padding:36px}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th {
-      background: var(--bg-tertiary);
-      color: var(--text-secondary);
-      font-weight: 600;
-      padding: 12px;
-      text-align: left;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    td {
-      padding: 12px;
-      border-top: 1px solid var(--border-primary);
-      color: var(--text-primary);
-    }
-
-    tr:hover {
-      background: var(--bg-tertiary);
-    }
-
-    .loading,
-    .empty {
-      text-align: center;
-      padding: 40px;
-      color: var(--text-muted);
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    /* User info */
-    .user-info {
-      margin-top: 12px;
-      padding: 12px;
-      background: var(--bg-tertiary);
-      border-radius: 8px;
-      font-size: 14px;
-    }
-
-    .user-info strong {
-      color: var(--accent-blue-light);
-    }
+    .totals{background:var(--bg-3); font-weight:700; border-bottom:2px solid var(--border)}
   </style>
 </head>
+
 <body>
-<header>
-  <div class="header-content">
-    <a href="/">← На главную</a>
-    <h1>🚗 Статистика ГИБДД - ДТП</h1>
-    <p class="subtitle">Данные о дорожно-транспортных происшествиях по муниципалитетам Липецкой области</p>
-    <div style="display:flex;gap:12px;align-items:center;margin-top:12px">
-      <div id="user-info" class="user-info hidden">
-        <strong id="user-name"></strong> (<span id="user-role"></span>)
+  <!-- ШАПКА -->
+  <header class="app-header" role="banner">
+    <div class="toolbar" role="group" aria-label="Панель действий">
+      <a class="user-link" id="user-link" href="/">← На главную</a>
+
+      <button id="themeBtn" class="btn" type="button" aria-pressed="false" title="Переключить тему">
+        <span class="icon" aria-hidden="true">🌙</span>
+        <span class="label">Тёмная тема</span>
+      </button>
+
+      <button id="btn-logout" class="btn" type="button">Выйти</button>
+    </div>
+  </header>
+
+  <!-- ТИТУЛ -->
+  <div class="page-head">
+    <h1 class="title">🚗 Статистика ГИБДД — ДТП</h1>
+    <p class="subtitle">Данные по муниципалитетам Липецкой области</p>
+  </div>
+
+  <!-- UPLOAD (ADMIN) -->
+  <section class="section">
+    <div id="upload" class="upload" hidden>
+      <h2>📁 Загрузка данных ГИБДД</h2>
+      <p class="note">Загрузите Excel-файл со статистикой ДТП (официальный шаблон ГИБДД).</p>
+
+      <div id="drop" class="drop">
+        <input id="file" type="file" accept=".xlsx,.xls"/>
+        <p class="note">Перетащите файл сюда или нажмите кнопку</p>
+        <button id="pick" class="pick">Выбрать файл</button>
+        <p id="fname" class="note" style="margin-top:8px"></p>
       </div>
-      <button id="themeToggle" class="btn" style="padding:8px 16px;font-size:14px;width:auto">🌙 Темная тема</button>
+
+      <div id="uresult" class="result"></div>
     </div>
-  </div>
-</header>
+  </section>
 
-<main>
-  <!-- Upload Section (Admin Only) -->
-  <div id="upload-section" class="upload-section hidden">
-    <h2>📁 Загрузка данных ГИБДД</h2>
-    <p style="color:var(--text-secondary);margin-bottom:16px">
-      Загрузите Excel файл со статистикой ДТП. Формат файла должен соответствовать шаблону ГИБДД.
-    </p>
-
-    <div class="upload-box" id="upload-box">
-      <input type="file" id="gibdd-file" accept=".xlsx,.xls" />
-      <p style="color:var(--text-secondary);margin-bottom:16px">📄 Перетащите файл сюда или нажмите кнопку</p>
-      <button class="upload-btn" id="upload-btn">Выбрать файл</button>
-      <p id="file-name" style="color:var(--accent-blue-light);margin-top:12px;font-size:13px"></p>
+  <!-- ФИЛЬТРЫ -->
+  <section class="filters">
+    <div class="filter-box">
+      <div class="fg">
+        <label for="period">Период</label>
+        <select id="period"><option>Загрузка…</option></select>
+      </div>
+      <button id="refresh" class="btn-ghost" type="button">Обновить</button>
     </div>
+  </section>
 
-    <div id="upload-result" class="upload-result"></div>
-  </div>
-
-  <!-- Filters -->
-  <div class="filters">
-    <div class="filter-group">
-      <label for="period">Период</label>
-      <select id="period">
-        <option value="">Загрузка...</option>
-      </select>
+  <!-- ТАБЛИЦА -->
+  <section class="table-wrap">
+    <div class="table">
+      <div id="data" class="center">Загрузка данных…</div>
     </div>
+  </section>
 
-    <div class="filter-group">
-      <button class="secondary" id="btn-refresh">Обновить</button>
-    </div>
-  </div>
+  <script>
+    const $ = s => document.querySelector(s);
+    let currentUser = null;
 
-  <!-- Data Table -->
-  <div class="table-container">
-    <div id="data-container">
-      <div class="loading">Загрузка данных...</div>
-    </div>
-  </div>
-</main>
-
-<script>
-const $ = (s) => document.querySelector(s);
-let currentUser = null;
-
-/* ===== Auth Check ===== */
-async function checkAuth() {
-  try {
-    const r = await fetch('/api/auth/me', { credentials: 'include' });
-    if (r.ok) {
-      const data = await r.json();
-      currentUser = data.user || data;
-
-      // Check password reset
-      if (currentUser.password_reset_required) {
-        window.location.href = '/change-password.html?required=true';
-        return false;
+    /* ===== ТЕМА ===== */
+    (function setupTheme(){
+      const root = document.documentElement;
+      const btn  = $('#themeBtn');
+      const saved = localStorage.getItem('theme');
+      const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
+      apply(saved || (prefersDark ? 'dark' : 'dark'));
+      btn.addEventListener('click', ()=>{
+        const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+        apply(next); localStorage.setItem('theme', next);
+      });
+      function apply(theme){
+        root.dataset.theme = theme;
+        const isDark = theme === 'dark';
+        btn.setAttribute('aria-pressed', String(isDark));
+        btn.querySelector('.icon').textContent  = isDark ? '🌙' : '🌞';
+        btn.querySelector('.label').textContent = isDark ? 'Тёмная тема' : 'Светлая тема';
       }
+    })();
 
-      updateUI();
-      return true;
-    } else {
-      window.location.href = '/';
-      return false;
+    /* ===== AUTH ===== */
+    async function checkAuth(){
+      try{
+        const r = await fetch('/api/auth/me',{credentials:'include'});
+        if(!r.ok){ location.href = '/'; return false; }
+        const data = await r.json();
+        currentUser = data.user || data;
+        if(currentUser?.password_reset_required){
+          location.href = '/change-password.html?required=true';
+          return false;
+        }
+        // user name in header left (link stays to home)
+        $('#user-link').textContent = (currentUser.role === 'governor')
+          ? 'Губернатор — на главную'
+          : (currentUser.municipality_name || 'На главную');
+
+        // show upload only for admin
+        if(currentUser.role === 'admin') $('#upload').hidden = false;
+
+        return true;
+      }catch(e){
+        console.error(e); location.href='/'; return false;
+      }
     }
-  } catch (e) {
-    console.error('checkAuth:', e);
-    window.location.href = '/';
-    return false;
-  }
-}
 
-function updateUI() {
-  $('#user-name').textContent = currentUser.municipality_name || 'Администратор';
-  $('#user-role').textContent = currentUser.role;
-  $('#user-info').classList.remove('hidden');
+    /* ===== PERIODS ===== */
+    async function loadPeriods(){
+      try{
+        const r = await fetch('/api/gibdd/periods',{credentials:'include'});
+        if(!r.ok) throw new Error('failed');
+        const rows = await r.json();
+        const sel = $('#period');
+        sel.innerHTML = '<option value="">— Выберите период —</option>';
+        rows.forEach(p=>{
+          const o = document.createElement('option');
+          o.value = p.period; o.textContent = p.period_name; sel.appendChild(o);
+        });
+        if(rows.length){ sel.value = rows[0].period; await loadData(); }
+      }catch(e){
+        console.error(e);
+        $('#period').innerHTML = '<option value="">Нет данных</option>';
+      }
+    }
 
-  // Show upload section only for admin
-  if (currentUser.role === 'admin') {
-    $('#upload-section').classList.remove('hidden');
-  }
-}
+    /* ===== DATA ===== */
+    async function loadData(){
+      const period = $('#period').value;
+      if(!period){ $('#data').className='center'; $('#data').textContent='Выберите период'; return; }
+      try{
+        $('#data').className='center'; $('#data').textContent='Загрузка данных…';
+        const r = await fetch(`/api/gibdd/data?period=${encodeURIComponent(period)}`,{credentials:'include'});
+        if(!r.ok) throw new Error('load error');
+        const rows = await r.json();
+        renderTable(rows);
+      }catch(e){
+        console.error(e);
+        $('#data').className='center'; $('#data').textContent='Ошибка загрузки данных';
+      }
+    }
 
-/* ===== Load Periods ===== */
-async function loadPeriods() {
-  try {
-    const r = await fetch('/api/gibdd/periods', { credentials: 'include' });
-    if (!r.ok) throw new Error('Failed to load');
+    function renderTable(rows){
+      if(!rows?.length){ $('#data').className='center'; $('#data').textContent='Нет данных за выбранный период'; return; }
 
-    const rows = await r.json();
-    const sel = $('#period');
-    sel.innerHTML = '<option value="">Выберите период</option>';
+      const tot = {dtp_total:0, dtp_total_dead:0, dtp_total_injured:0, dtp_pedestrians:0, dtp_children_16:0, dtp_children_18:0, dtp_in_settlements:0, dtp_outside_settlements:0};
+      rows.forEach(r=>{
+        tot.dtp_total              += +r.dtp_total              || 0;
+        tot.dtp_total_dead         += +r.dtp_total_dead         || 0;
+        tot.dtp_total_injured      += +r.dtp_total_injured      || 0;
+        tot.dtp_pedestrians        += +r.dtp_pedestrians        || 0;
+        tot.dtp_children_16        += +r.dtp_children_16        || 0;
+        tot.dtp_children_18        += +r.dtp_children_18        || 0;
+        tot.dtp_in_settlements     += +r.dtp_in_settlements     || 0;
+        tot.dtp_outside_settlements+= +r.dtp_outside_settlements|| 0;
+      });
 
-    rows.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.period;
-      opt.textContent = p.period_name;
-      sel.appendChild(opt);
+      const esc = s => (s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Муниципалитет</th>
+              <th>ДТП</th>
+              <th>Погибло</th>
+              <th>Ранено</th>
+              <th>Пешеходы</th>
+              <th>Дети (&lt;16)</th>
+              <th>Дети (&lt;18)</th>
+              <th>В населённых пунктах</th>
+              <th>Вне населённых пунктов</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="totals">
+              <td><strong>Липецкая область</strong></td>
+              <td>${tot.dtp_total}</td>
+              <td>${tot.dtp_total_dead}</td>
+              <td>${tot.dtp_total_injured}</td>
+              <td>${tot.dtp_pedestrians}</td>
+              <td>${tot.dtp_children_16}</td>
+              <td>${tot.dtp_children_18}</td>
+              <td>${tot.dtp_in_settlements}</td>
+              <td>${tot.dtp_outside_settlements}</td>
+            </tr>
+            ${rows.map(r=>`
+              <tr>
+                <td><strong>${esc(r.municipality_name)}</strong></td>
+                <td>${r.dtp_total ?? '-'}</td>
+                <td>${r.dtp_total_dead ?? '-'}</td>
+                <td>${r.dtp_total_injured ?? '-'}</td>
+                <td>${r.dtp_pedestrians ?? '-'}</td>
+                <td>${r.dtp_children_16 ?? '-'}</td>
+                <td>${r.dtp_children_18 ?? '-'}</td>
+                <td>${r.dtp_in_settlements ?? '-'}</td>
+                <td>${r.dtp_outside_settlements ?? '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`;
+      $('#data').className=''; $('#data').innerHTML = html;
+    }
+
+    /* ===== UPLOAD (admin) ===== */
+    const pick = $('#pick'), file = $('#file'), drop = $('#drop'), fname = $('#fname'), uresult = $('#uresult');
+
+    pick?.addEventListener('click', ()=> file.click());
+    file?.addEventListener('change', e => { const f=e.target.files[0]; if(f){ fname.textContent=`Выбран: ${f.name}`; upload(f); } });
+
+    drop?.addEventListener('dragover', e=>{ e.preventDefault(); drop.classList.add('dragover'); });
+    drop?.addEventListener('dragleave', ()=> drop.classList.remove('dragover'));
+    drop?.addEventListener('drop', e=>{
+      e.preventDefault(); drop.classList.remove('dragover');
+      const f = e.dataTransfer.files[0]; if(f){ fname.textContent=`Выбран: ${f.name}`; upload(f); }
     });
 
-    // Select first period if available
-    if (rows.length > 0) {
-      sel.value = rows[0].period;
-      loadData();
+    async function upload(f){
+      try{
+        pick.disabled = true; pick.textContent = 'Загрузка…'; uresult.className='result'; uresult.style.display='none';
+
+        const fd = new FormData(); fd.append('file', f);
+        const resp = await fetch('/api/gibdd/upload',{method:'POST',credentials:'include',body:fd});
+        const out  = await resp.json().catch(()=>({}));
+
+        if(resp.ok){
+          uresult.className='result ok'; uresult.style.display='block';
+          uresult.innerHTML = `✅ Успешно загружено<br>Период: ${out.period}<br>Импортировано: ${out.imported}${out.errors?.length?`<br>⚠️ Ошибки: ${out.errors.length}`:''}${out.skipped?.length?`<br>Пропущено: ${out.skipped.length}`:''}`;
+          file.value=''; fname.textContent='';
+          await loadPeriods();
+        }else{
+          throw new Error(out.message || 'Ошибка загрузки');
+        }
+      }catch(e){
+        uresult.className='result err'; uresult.style.display='block'; uresult.textContent = `❌ ${e.message}`;
+      }finally{
+        pick.disabled = false; pick.textContent = 'Выбрать файл';
+      }
     }
-  } catch (e) {
-    console.error('loadPeriods:', e);
-    $('#period').innerHTML = '<option value="">Нет данных</option>';
-  }
-}
 
-/* ===== Load Data ===== */
-async function loadData() {
-  const period = $('#period').value;
+    /* ===== EVENTS ===== */
+    $('#period').addEventListener('change', loadData);
+    $('#refresh').addEventListener('click', loadData);
+    $('#btn-logout').addEventListener('click', async()=>{ try{await fetch('/api/auth/logout',{method:'POST',credentials:'include'})}finally{location.href='/'}});
 
-  if (!period) {
-    $('#data-container').innerHTML = '<div class="empty">Выберите период</div>';
-    return;
-  }
-
-  try {
-    $('#data-container').innerHTML = '<div class="loading">Загрузка данных...</div>';
-
-    const r = await fetch(`/api/gibdd/data?period=${period}`, { credentials: 'include' });
-    if (!r.ok) throw new Error('Failed to load');
-
-    const rows = await r.json();
-    renderTable(rows);
-
-  } catch (e) {
-    console.error('loadData:', e);
-    $('#data-container').innerHTML = '<div class="empty">Ошибка загрузки данных</div>';
-  }
-}
-
-/* ===== Render Table ===== */
-function renderTable(rows) {
-  if (rows.length === 0) {
-    $('#data-container').innerHTML = '<div class="empty">Нет данных за выбранный период</div>';
-    return;
-  }
-
-  // Calculate totals for Lipetsk Oblast
-  const totals = {
-    dtp_total: 0,
-    dtp_total_dead: 0,
-    dtp_total_injured: 0,
-    dtp_pedestrians: 0,
-    dtp_children_16: 0,
-    dtp_children_18: 0,
-    dtp_in_settlements: 0,
-    dtp_outside_settlements: 0
-  };
-
-  rows.forEach(row => {
-    totals.dtp_total += Number(row.dtp_total || 0);
-    totals.dtp_total_dead += Number(row.dtp_total_dead || 0);
-    totals.dtp_total_injured += Number(row.dtp_total_injured || 0);
-    totals.dtp_pedestrians += Number(row.dtp_pedestrians || 0);
-    totals.dtp_children_16 += Number(row.dtp_children_16 || 0);
-    totals.dtp_children_18 += Number(row.dtp_children_18 || 0);
-    totals.dtp_in_settlements += Number(row.dtp_in_settlements || 0);
-    totals.dtp_outside_settlements += Number(row.dtp_outside_settlements || 0);
-  });
-
-  const html = `
-    <table>
-      <thead>
-        <tr>
-          <th>Муниципалитет</th>
-          <th>ДТП</th>
-          <th>Погибло</th>
-          <th>Ранено</th>
-          <th>Пешеходы</th>
-          <th>Дети (&lt;16)</th>
-          <th>Дети (&lt;18)</th>
-          <th>В нас. пунктах</th>
-          <th>Вне нас. пунктов</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style="background: var(--bg-tertiary); font-weight: bold; border-bottom: 2px solid var(--border-primary);">
-          <td><strong>Липецкая область</strong></td>
-          <td>${totals.dtp_total || '-'}</td>
-          <td>${totals.dtp_total_dead || '-'}</td>
-          <td>${totals.dtp_total_injured || '-'}</td>
-          <td>${totals.dtp_pedestrians || '-'}</td>
-          <td>${totals.dtp_children_16 || '-'}</td>
-          <td>${totals.dtp_children_18 || '-'}</td>
-          <td>${totals.dtp_in_settlements || '-'}</td>
-          <td>${totals.dtp_outside_settlements || '-'}</td>
-        </tr>
-        ${rows.map(row => `
-          <tr>
-            <td><strong>${escapeHtml(row.municipality_name)}</strong></td>
-            <td>${row.dtp_total || '-'}</td>
-            <td>${row.dtp_total_dead || '-'}</td>
-            <td>${row.dtp_total_injured || '-'}</td>
-            <td>${row.dtp_pedestrians || '-'}</td>
-            <td>${row.dtp_children_16 || '-'}</td>
-            <td>${row.dtp_children_18 || '-'}</td>
-            <td>${row.dtp_in_settlements || '-'}</td>
-            <td>${row.dtp_outside_settlements || '-'}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  `;
-
-  $('#data-container').innerHTML = html;
-}
-
-function escapeHtml(str) {
-  return (str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
-}
-
-/* ===== Upload (Admin Only) ===== */
-const uploadBox = $('#upload-box');
-const uploadBtn = $('#upload-btn');
-const fileInput = $('#gibdd-file');
-const fileName = $('#file-name');
-const uploadResult = $('#upload-result');
-
-uploadBtn.addEventListener('click', () => {
-  fileInput.click();
-});
-
-fileInput.addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  fileName.textContent = `Выбран: ${file.name}`;
-  await uploadFile(file);
-});
-
-uploadBox.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  uploadBox.classList.add('dragover');
-});
-
-uploadBox.addEventListener('dragleave', () => {
-  uploadBox.classList.remove('dragover');
-});
-
-uploadBox.addEventListener('drop', async (e) => {
-  e.preventDefault();
-  uploadBox.classList.remove('dragover');
-
-  const file = e.dataTransfer.files[0];
-  if (!file) return;
-
-  fileName.textContent = `Выбран: ${file.name}`;
-  await uploadFile(file);
-});
-
-async function uploadFile(file) {
-  try {
-    uploadBtn.disabled = true;
-    uploadBtn.textContent = 'Загрузка...';
-    uploadResult.style.display = 'none';
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await fetch('/api/gibdd/upload', {
-      method: 'POST',
-      credentials: 'include',
-      body: formData
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-      uploadResult.className = 'upload-result success';
-      uploadResult.style.display = 'block';
-      uploadResult.innerHTML = `
-        ✅ Успешно загружено!<br>
-        Период: ${result.period}<br>
-        Импортировано записей: ${result.imported}<br>
-        ${result.errors.length > 0 ? `⚠️ Ошибок: ${result.errors.length}` : ''}
-        ${result.skipped.length > 0 ? `<br>Пропущено: ${result.skipped.length}` : ''}
-      `;
-
-      fileInput.value = '';
-      fileName.textContent = '';
-
-      // Reload periods and data
+    /* ===== INIT ===== */
+    (async function init(){
+      if(!(await checkAuth())) return;
       await loadPeriods();
-
-    } else {
-      throw new Error(result.message || 'Ошибка загрузки');
-    }
-
-  } catch (error) {
-    console.error('Upload error:', error);
-    uploadResult.className = 'upload-result error';
-    uploadResult.style.display = 'block';
-    uploadResult.textContent = `❌ Ошибка: ${error.message}`;
-  } finally {
-    uploadBtn.disabled = false;
-    uploadBtn.textContent = 'Выбрать файл';
-  }
-}
-
-/* ===== Event Listeners ===== */
-$('#period').addEventListener('change', loadData);
-$('#btn-refresh').addEventListener('click', loadData);
-
-/* ===== Init ===== */
-(async function init() {
-  const isAuth = await checkAuth();
-  if (!isAuth) return;
-
-  await loadPeriods();
-})();
-</script>
-<script src="/theme.js"></script>
+    })();
+  </script>
 </body>
 </html>
