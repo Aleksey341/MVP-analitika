@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Интерактивная карта - Липецкая область</title>
+  <link rel="stylesheet" href="/no-badge.css" />
+  <style>
+    :root {
+      --bg-primary: #0f1115;
+      --bg-secondary: #1a1d24;
+      --bg-tertiary: #232a36;
+      --border: #2b3444;
+      --text-primary: #e8eef7;
+      --text-secondary: #9fb0c9;
+      --text-muted: #6a7789;
+      --accent-blue: #2563eb;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+
+    header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    h1 { margin: 0; font-size: 24px; }
+    .subtitle { color: var(--text-secondary); font-size: 14px; margin: 4px 0 0 0; }
+
+    main {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .map-container {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .map-wrapper {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .region {
+      fill: var(--bg-tertiary);
+      stroke: var(--border);
+      stroke-width: 2;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .region:hover {
+      fill: rgba(37, 99, 235, 0.3);
+      stroke: var(--accent-blue);
+      stroke-width: 3;
+    }
+
+    .region.active {
+      fill: rgba(16, 185, 129, 0.4);
+      stroke: var(--success);
+      stroke-width: 4;
+    }
+
+    .region-label {
+      fill: var(--text-primary);
+      font-size: 12px;
+      pointer-events: none;
+      text-anchor: middle;
+      user-select: none;
+    }
+
+    .info-panel {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      position: sticky;
+      top: 100px;
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+    }
+
+    .info-panel h2 {
+      margin: 0 0 16px 0;
+      font-size: 20px;
+      color: var(--text-primary);
+    }
+
+    .info-empty {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 40px 20px;
+    }
+
+    .info-empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .stat-change {
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .stat-change.positive { color: var(--success); }
+    .stat-change.negative { color: var(--danger); }
+
+    .btn {
+      padding: 10px 20px;
+      background: var(--accent-blue);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn:hover {
+      background: #1d4ed8;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    .instructions {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-content">
+    <div>
+      <h1>🗺️ Интерактивная карта Липецкой области</h1>
+      <p class="subtitle">Кликните на район для просмотра статистики</p>
+    </div>
+    <a href="/dashboard" class="btn">← К дашборду</a>
+  </div>
+</header>
+
+<main>
+  <div class="map-container">
+    <div class="instructions">
+      💡 <strong>Инструкция:</strong> Кликните на любой район на карте для просмотра детальной статистики по ДТП и услугам.
+    </div>
+
+    <div class="map-wrapper">
+      <svg viewBox="0 0 1000 1000" id="map-svg">
+        <!-- Север -->
+        <!-- Усманский район (северо-запад) -->
+        <path class="region" data-mun-id="17" data-mun-name="Усманский район"
+          d="M 50,200 L 150,150 L 220,170 L 250,230 L 200,320 L 120,350 L 80,280 Z" />
+        <text class="region-label" x="150" y="250">Усманский</text>
+
+        <!-- Данковский район (север) -->
+        <path class="region" data-mun-id="4" data-mun-name="Данковский район"
+          d="M 250,100 L 380,80 L 450,120 L 430,200 L 380,250 L 250,230 L 220,170 Z" />
+        <text class="region-label" x="340" y="170">Данковский</text>
+
+        <!-- Лебедянский район (север-центр) -->
+        <path class="region" data-mun-id="12" data-mun-name="Лебедянский район"
+          d="M 220,170 L 250,230 L 200,320 L 240,380 L 320,400 L 380,350 L 380,250 Z" />
+        <text class="region-label" x="280" y="300">Лебедянский</text>
+
+        <!-- Тербунский район -->
+        <path class="region" data-mun-id="16" data-mun-name="Тербунский район"
+          d="M 430,200 L 520,180 L 600,220 L 580,320 L 520,380 L 450,360 L 380,350 L 380,250 Z" />
+        <text class="region-label" x="490" y="280">Тербунский</text>
+
+        <!-- Чаплыгинский район (северо-восток) -->
+        <path class="region" data-mun-id="20" data-mun-name="Чаплыгинский район"
+          d="M 520,80 L 650,100 L 680,150 L 650,220 L 600,220 L 520,180 L 450,120 Z" />
+        <text class="region-label" x="580" y="160">Чаплыгинский</text>
+
+        <!-- Лев-Толстовский район (восток) -->
+        <path class="region" data-mun-id="13" data-mun-name="Лев-Толстовский район"
+          d="M 650,220 L 750,250 L 780,320 L 750,400 L 680,420 L 620,400 L 580,320 L 600,220 Z" />
+        <text class="region-label" x="680" y="320">Лев-Толстовский</text>
+
+        <!-- Центр -->
+        <!-- Добринский район (запад-центр) -->
+        <path class="region" data-mun-id="5" data-mun-name="Добринский район"
+          d="M 80,350 L 120,420 L 180,500 L 240,520 L 320,480 L 320,400 L 240,380 L 200,320 Z" />
+        <text class="region-label" x="210" y="430">Добринский</text>
+
+        <!-- Липецкий район + г. Липецк (центр) -->
+        <path class="region" data-mun-id="14" data-mun-name="Липецкий район"
+          d="M 320,400 L 380,350 L 450,360 L 520,380 L 520,480 L 460,520 L 380,520 L 320,480 Z" />
+        <text class="region-label" x="420" y="440">Липецкий</text>
+
+        <!-- г. Липецк (центральная точка) -->
+        <circle class="region" data-mun-id="1" data-mun-name="г. Липецк"
+          cx="420" cy="460" r="30" />
+        <text class="region-label" x="420" y="465" style="font-weight: bold;">Липецк</text>
+
+        <!-- Задонский район -->
+        <path class="region" data-mun-id="9" data-mun-name="Задонский район"
+          d="M 520,380 L 580,320 L 620,400 L 620,500 L 560,540 L 520,480 Z" />
+        <text class="region-label" x="570" y="450">Задонский</text>
+
+        <!-- Добровский район (восток-центр) -->
+        <path class="region" data-mun-id="6" data-mun-name="Добровский район"
+          d="M 620,400 L 680,420 L 720,480 L 720,560 L 660,600 L 620,560 L 620,500 Z" />
+        <text class="region-label" x="670" y="500">Добровский</text>
+
+        <!-- Становлянский район (дальний восток) -->
+        <path class="region" data-mun-id="15" data-mun-name="Становлянский район"
+          d="M 720,480 L 800,500 L 850,560 L 850,650 L 780,680 L 720,660 L 720,560 Z" />
+        <text class="region-label" x="780" y="580">Становлянский</text>
+
+        <!-- Юг -->
+        <!-- Грязинский район (центр-юг) -->
+        <path class="region" data-mun-id="3" data-mun-name="Грязинский район"
+          d="M 320,480 L 380,520 L 460,520 L 480,600 L 420,660 L 340,660 L 280,620 L 240,560 L 240,520 Z" />
+        <text class="region-label" x="360" y="580">Грязинский</text>
+
+        <!-- Краснинский район (запад-юг) -->
+        <path class="region" data-mun-id="11" data-mun-name="Краснинский район"
+          d="M 180,560 L 240,560 L 280,620 L 280,700 L 220,760 L 140,740 L 100,680 L 120,600 Z" />
+        <text class="region-label" x="200" y="660">Краснинский</text>
+
+        <!-- Воловский район (юго-запад) -->
+        <path class="region" data-mun-id="19" data-mun-name="Воловский район"
+          d="M 100,680 L 140,740 L 160,820 L 120,880 L 50,900 L 30,840 L 50,760 Z" />
+        <text class="region-label" x="90" y="800">Воловский</text>
+
+        <!-- Хлевенский район (центр-юг) -->
+        <path class="region" data-mun-id="18" data-mun-name="Хлевенский район"
+          d="M 460,520 L 520,480 L 560,540 L 580,620 L 540,700 L 480,720 L 420,660 L 480,600 Z" />
+        <text class="region-label" x="500" y="620">Хлевенский</text>
+
+        <!-- Елецкий район + г. Елец (юго-восток) -->
+        <path class="region" data-mun-id="8" data-mun-name="Елецкий район"
+          d="M 480,720 L 540,700 L 580,720 L 620,780 L 600,860 L 520,900 L 440,880 L 400,820 L 420,760 Z" />
+        <text class="region-label" x="520" y="800">Елецкий</text>
+
+        <!-- г. Елец (южная точка) -->
+        <circle class="region" data-mun-id="2" data-mun-name="г. Елец"
+          cx="520" cy="820" r="30" />
+        <text class="region-label" x="520" y="825" style="font-weight: bold;">Елец</text>
+
+        <!-- Долгоруковский район (восток-юг) -->
+        <path class="region" data-mun-id="7" data-mun-name="Долгоруковский район"
+          d="M 620,560 L 660,600 L 720,660 L 720,760 L 680,840 L 620,860 L 580,820 L 580,720 L 620,660 Z" />
+        <text class="region-label" x="660" y="720">Долгоруковский</text>
+
+        <!-- Измалковский район (юго-восток) -->
+        <path class="region" data-mun-id="10" data-mun-name="Измалковский район"
+          d="M 620,860 L 680,840 L 750,880 L 780,940 L 720,970 L 640,960 L 600,920 L 600,860 Z" />
+        <text class="region-label" x="680" y="910">Измалковский</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="info-panel" id="info-panel">
+    <div class="info-empty">
+      <div class="info-empty-icon">🗺️</div>
+      <p>Выберите муниципалитет на карте<br>для просмотра статистики</p>
+    </div>
+  </div>
+</main>
+
+<script>
+// ========================================
+// SELECT MUNICIPALITY
+// ========================================
+
+let currentMunId = null;
+
+function selectMunicipality(munId, munName) {
+  // Убираем предыдущий выбор
+  document.querySelectorAll('.region').forEach(r => r.classList.remove('active'));
+
+  // Выделяем новый
+  const regions = document.querySelectorAll(`[data-mun-id="${munId}"]`);
+  regions.forEach(region => {
+    region.classList.add('active');
+  });
+
+  currentMunId = munId;
+
+  // Загружаем данные
+  loadMunicipalityData(munId, munName);
+}
+
+// ========================================
+// LOAD DATA
+// ========================================
+
+async function loadMunicipalityData(munId, munName) {
+  const panel = document.getElementById('info-panel');
+  panel.innerHTML = '<div class="loading">Загрузка данных...</div>';
+
+  try {
+    const currentYear = new Date().getFullYear();
+
+    // Загружаем данные ГИБДД
+    const gibddResponse = await fetch(`/api/gibdd/heatmap?year=${currentYear}`);
+    const gibddData = await gibddResponse.json();
+
+    const munGibdd = gibddData.find(d => d.municipality_id === munId);
+
+    // Загружаем данные услуг
+    const servicesResponse = await fetch(`/api/services-dashboard/data?year=${currentYear}&municipality_id=${munId}`);
+    const servicesData = await servicesResponse.json();
+
+    // Рендерим панель
+    renderMunicipalityPanel(munName, munGibdd, servicesData);
+
+  } catch (error) {
+    console.error('Error loading data:', error);
+    panel.innerHTML = `
+      <div class="info-empty">
+        <div class="info-empty-icon">⚠️</div>
+        <p>Ошибка загрузки данных</p>
+      </div>
+    `;
+  }
+}
+
+// ========================================
+// RENDER PANEL
+// ========================================
+
+function renderMunicipalityPanel(name, gibddData, servicesData) {
+  const panel = document.getElementById('info-panel');
+
+  const totalDTP = gibddData ? gibddData.total : 0;
+  const totalServices = servicesData.kpi ? servicesData.kpi.total_services : 0;
+
+  panel.innerHTML = `
+    <h2>${name}</h2>
+
+    <div class="stat-card">
+      <div class="stat-label">🚗 ДТП за ${new Date().getFullYear()} год</div>
+      <div class="stat-value">${totalDTP.toLocaleString()}</div>
+      ${servicesData.kpi && servicesData.kpi.change_percent ? `
+        <div class="stat-change ${parseFloat(servicesData.kpi.change_percent) < 0 ? 'positive' : 'negative'}">
+          ${parseFloat(servicesData.kpi.change_percent) > 0 ? '↑' : '↓'} ${Math.abs(servicesData.kpi.change_percent)}%
+        </div>
+      ` : ''}
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">📊 Услуг оказано</div>
+      <div class="stat-value">${totalServices.toLocaleString()}</div>
+      ${servicesData.kpi && servicesData.kpi.change_percent ? `
+        <div class="stat-change ${parseFloat(servicesData.kpi.change_percent) > 0 ? 'positive' : 'negative'}">
+          ${parseFloat(servicesData.kpi.change_percent) > 0 ? '↑' : '↓'} ${Math.abs(servicesData.kpi.change_percent)}%
+        </div>
+      ` : ''}
+    </div>
+
+    <div style="margin-top: 24px;">
+      <a href="/dashboard?municipality_id=${currentMunId}" class="btn" style="width: 100%; text-align: center;">
+        📈 Подробный отчёт →
+      </a>
+    </div>
+
+    <div style="margin-top: 16px; padding: 12px; background: var(--bg-tertiary); border-radius: 8px; font-size: 12px; color: var(--text-secondary);">
+      <p style="margin: 0;">💡 <strong>Совет:</strong> Кликните на другой регион для сравнения показателей</p>
+    </div>
+  `;
+}
+
+// ========================================
+// INIT
+// ========================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Добавляем обработчики кликов на все регионы
+  document.querySelectorAll('.region').forEach(region => {
+    region.addEventListener('click', () => {
+      const munId = parseInt(region.dataset.munId);
+      const munName = region.dataset.munName;
+      selectMunicipality(munId, munName);
+    });
+  });
+
+  // Автоматически выбираем Липецк через 500мс
+  setTimeout(() => {
+    selectMunicipality(1, 'г. Липецк');
+  }, 500);
+});
+</script>
+
+</body>
+</html>
