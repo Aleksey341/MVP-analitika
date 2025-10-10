@@ -118,9 +118,11 @@
     return String(s || '')
       .toLowerCase()
       .replaceAll('ё','е')
-      .replace(/^(городской округ)\s+/,'')
-      .replace(/\s+муниципальный\s+округ/,'')
-      .replace(/\s+район/,'')
+      .replace(/^г\.\s*/i,'')
+      .replace(/^городской округ\s+/i,'')
+      .replace(/\s+муниципальный\s+округ$/i,'')
+      .replace(/\s+муниципальный\s+район$/i,'')
+      .replace(/\s+район$/i,'')
       .replace(/\s+/g,' ')
       .trim();
   }
@@ -168,8 +170,11 @@
     try{
       const res = await fetch('/api/municipalities/all', {credentials:'include'});
       const rows = await res.json();
+      console.log('Муниципалитеты из БД:', rows.length);
       rows.forEach(r=>{
-        munNameToId.set(normalizeName(r.name), r.id);
+        const norm = normalizeName(r.name);
+        munNameToId.set(norm, r.id);
+        console.log(`БД: "${r.name}" -> "${norm}" (id: ${r.id})`);
       });
     }catch(e){ console.warn('Не удалось получить список муниципалитетов:', e); }
 
@@ -203,16 +208,20 @@
     // 5) Подгрузка GeoJSON
     const gj = await fetch('/geo/lipetsk-municipalities.geojson');
     const geojson = await gj.json();
+    console.log('GeoJSON загружен, districts:', geojson.features.length);
 
     // Подготовим значение ДТП для раскраски
     let values = [];
     geojson.features.forEach(f=>{
       const gName = f.properties['name:ru'] || f.properties.name;
-      const r = gibddByMun.get(normalizeName(gName));
+      const norm = normalizeName(gName);
+      const r = gibddByMun.get(norm);
+      console.log(`GeoJSON: "${gName}" -> "${norm}" -> ${r ? r.dtp_total + ' ДТП' : 'НЕТ ДАННЫХ'}`);
       if (r) values.push(Number(r.dtp_total || 0));
     });
     const min = values.length ? Math.min(...values) : 0;
     const max = values.length ? Math.max(...values) : 1;
+    console.log('Диапазон ДТП:', min, '-', max);
     makeLegend(min, max);
 
     geoLayer = L.geoJSON(geojson, {
@@ -227,7 +236,15 @@
       },
       onEachFeature: (feature, layer)=>{
         const displayName = feature.properties['name:ru'] || feature.properties.name;
-        layer.bindTooltip(displayName, {sticky:true, direction:'top'});
+        if (!displayName) {
+          console.warn('Нет названия для:', feature.properties);
+        }
+        layer.bindTooltip(displayName || 'Без названия', {
+          permanent: false,
+          sticky: true,
+          direction: 'top',
+          opacity: 0.9
+        });
 
         layer.on('click', ()=>{
           selectMunicipality(displayName);
