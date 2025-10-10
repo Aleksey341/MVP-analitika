@@ -51,24 +51,30 @@
 
     .hint{font-size:13px;color:var(--text-secondary);margin-top:8px}
 
-    /* постоянные подписи в центре района */
+    /* чистый текст без плашек */
     .mun-label {
-      background: rgba(22, 22, 22, .75);
-      color: #fff;
-      padding: 2px 6px;
-      border-radius: 6px;
-      line-height: 1.05;
-      font-weight: 600;
-      font-size: 11px;
-      white-space: normal;
-      word-break: break-word;
-      text-align: center;
-      max-width: 160px;
-      box-shadow: 0 1px 2px rgba(0,0,0,.25);
+      position: relative;
+      background: transparent !important;
+      border: 0 !important;
+      padding: 0 !important;
+      color: #0b1220;
+      font-weight: 700;
+      font-size: 12px;
+      line-height: 1.15;
+      white-space: nowrap;
       pointer-events: none;
+      text-align: center;
+      /* белый «ореол» вокруг текста для читаемости на карте */
+      text-shadow:
+        -1px -1px 0 #fff,
+         1px -1px 0 #fff,
+        -1px  1px 0 #fff,
+         1px  1px 0 #fff,
+         0    0   3px #fff;
     }
-    .mun-label--tiny { font-size: 10px; }
-    .mun-label--micro { font-size: 9px; }
+    .mun-label.m--sm { font-size: 11px; }
+    .mun-label.m--xs { font-size: 10px; }
+    .mun-label.m--xxs { font-size: 9px; }
     /* всплывающий tooltip при наведении */
     .leaflet-tooltip.hover-label{
       background: var(--bg-secondary);
@@ -134,6 +140,8 @@
     src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"
     crossorigin="">
   </script>
+  <!-- Polylabel для точного центроида внутри полигона -->
+  <script src="https://unpkg.com/@mapbox/polylabel@1.1.0/polylabel.min.js"></script>
 
   <script>
   // ========= Утилиты =========
@@ -154,8 +162,10 @@
   }
 
   // Сокращение длинных названий для подписей
-  function shortName(name){
+  function shortName(name=''){
     return name
+      .replace(/^городской округ\s+Липецк$/i, 'Липецк')
+      .replace(/^городской округ\s+Елец$/i, 'Елец')
       .replace(/^городской округ\s+/i, 'г.о. ')
       .replace(/муниципальный округ/gi, 'МО')
       .replace(/\s+муниципальный район/gi, ' район')
@@ -194,7 +204,7 @@
   let munNameToId = new Map(); // нормализованное имя -> id (из /api/municipalities/all)
   let lastPeriod = null;
   let gibddByMun = new Map(); // нормализованное имя -> агрегаты ДТП (последний период)
-  let labelMarkers = new Map(); // featureId -> {marker, el, bounds, name}
+  let labelStore = []; // хранилище подписей: {layer, el, name, marker}
 
   async function init(){
     // 1) Аутентификация (если нужно)
@@ -289,7 +299,7 @@
         });
 
         // Постоянная подпись в центре района
-        addLabelForFeature(feature, layer);
+        addLabel(feature, layer);
 
         layer.on('click', ()=>{
           selectMunicipality(displayName);
@@ -299,66 +309,69 @@
       }
     }).addTo(map);
 
-    // Обновляем подписи при изменении зума и размера окна
-    map.on('zoomend', () => {
-      labelMarkers.forEach(entry => fitLabelToBounds(entry));
-    });
-    map.on('resize', () => {
-      labelMarkers.forEach(entry => fitLabelToBounds(entry));
-    });
+    // Обновляем подписи при изменении зума, размера окна и движении карты
+    map.on('zoomend resize moveend', refreshLabels);
+    refreshLabels(); // первичная подгонка
 
     // Автовыбор Липецка при старте
     setTimeout(()=>selectMunicipality('городской округ Липецк'), 400);
   }
 
   // Добавление постоянной подписи для района
-  function addLabelForFeature(feature, layer){
-    const fullName = feature.properties['name:ru'] || feature.properties.name || '';
-    const name = shortName(fullName);
+  function addLabel(feature, layer){
+    const raw = feature?.properties?.['name:ru'] || feature?.properties?.name || '';
+    const name = shortName(raw);
     if (!name) return;
 
-    const bounds = layer.getBounds();
-    const center = bounds.getCenter();
+    // Ищем «внутреннюю» точку — polylabel; fallback: центр bbox
+    let latlng;
+    try {
+      // polylabel ждёт MultiPolygon формат
+      const coords = feature.geometry.type === 'Polygon'
+        ? [feature.geometry.coordinates]
+        : feature.geometry.coordinates;
+      const p = polylabel(coords, 2); // [lng, lat]
+      latlng = L.latLng(p[1], p[0]);
+    } catch {
+      latlng = layer.getBounds().getCenter();
+    }
 
+    // Создаём divIcon с нашим классом
     const el = document.createElement('div');
     el.className = 'mun-label';
     el.textContent = name;
-    el.title = fullName; // браузерный tooltip с полным именем
+    el.title = raw; // полный текст по ховеру
 
-    const marker = L.marker(center, {
-      icon: L.divIcon({
-        className: '',
-        html: el,
-        iconSize: null
-      }),
-      interactive: false
+    const marker = L.marker(latlng, {
+      icon: L.divIcon({ className: '', html: el, iconSize: null }),
+      interactive: false,
+      pane: 'markerPane'
     }).addTo(map);
 
-    labelMarkers.set(L.Util.stamp(layer), { marker, el, bounds, name });
-    fitLabelToBounds({ el, bounds, name }); // первичная подгонка
+    // Сохраняем для адаптации на зуме/resize
+    labelStore.push({ layer, el, name, marker });
   }
 
-  // Вычисление ширины bbox в пикселях и подбор размера шрифта
-  function fitLabelToBounds({ el, bounds, name }){
-    const ne = map.latLngToLayerPoint(bounds.getNorthEast());
-    const sw = map.latLngToLayerPoint(bounds.getSouthWest());
-    const widthPx = Math.max(40, Math.min(200, Math.abs(ne.x - sw.x) - 12));
-
-    el.style.maxWidth = widthPx + 'px';
-
-    // Базовый размер зависит от зума
+  // Динамическая адаптация размера/скрытие для маленьких районов
+  function refreshLabels(){
     const z = map.getZoom();
-    let fs = 9 + Math.max(0, z - 8) * 0.9;
-    fs = Math.min(13, Math.max(9, fs));
+    labelStore.forEach(({ layer, el, name }) => {
+      // Доступная ширина — приблизительно по bbox полигона в px
+      const b = layer.getBounds();
+      const ne = map.latLngToLayerPoint(b.getNorthEast());
+      const sw = map.latLngToLayerPoint(b.getSouthWest());
+      const widthPx = Math.max(0, Math.abs(ne.x - sw.x));
 
-    // Если имя очень длинное — уменьшаем чуть сильнее
-    if (name.length > 20) fs -= 0.5;
-    if (name.length > 28) fs -= 1;
+      // Базовый размер от зума
+      el.classList.remove('m--sm', 'm--xs', 'm--xxs');
+      if (z <= 7) el.classList.add('m--xxs');
+      else if (z === 8) el.classList.add('m--xs');
+      else if (z === 9) el.classList.add('m--sm');
 
-    // Применяем классы для разных размеров
-    el.classList.toggle('mun-label--tiny', fs <= 10);
-    el.classList.toggle('mun-label--micro', fs < 10);
-    el.style.fontSize = fs + 'px';
+      // Если полигон очень узкий — прячем подпись
+      const tooNarrow = widthPx < 45;
+      el.style.display = tooNarrow ? 'none' : 'block';
+    });
   }
 
   function selectMunicipality(displayName){
