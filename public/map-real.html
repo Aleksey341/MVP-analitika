@@ -103,8 +103,8 @@
 
     .region-overlay {
       position: absolute;
-      background: transparent;
-      border: 2px solid transparent;
+      background: rgba(37, 99, 235, 0.1);
+      border: 2px solid rgba(37, 99, 235, 0.3);
       cursor: pointer;
       pointer-events: all;
       transition: all 0.3s ease;
@@ -258,11 +258,12 @@
 
     <div class="map-wrapper" id="map-wrapper">
       <!-- Реальная карта Липецкой области -->
-      <img src="https://upload.wikimedia.org/wikipedia/commons/3/35/Lipetsk_in_Russia.svg"
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Lipetsk_Oblast_administrative_map.svg/800px-Lipetsk_Oblast_administrative_map.svg.png"
            alt="Карта Липецкой области"
            class="map-image"
            id="map-image"
-           crossorigin="anonymous" />
+           crossorigin="anonymous"
+           onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/9/94/Lipetsk_Oblast_administrative_map.svg';" />
 
       <!-- Интерактивные области (координаты в процентах) -->
       <div class="map-overlay" id="map-overlay">
@@ -470,12 +471,28 @@ function renderMunicipalityPanel(name, gibddData, servicesData) {
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  createInteractiveMap();
+  const mapImage = document.getElementById('map-image');
 
-  // Автоматически выбираем Липецк через 500мс
+  // Ждём загрузки изображения
+  if (mapImage.complete) {
+    console.log('Карта загружена, размеры:', mapImage.naturalWidth, 'x', mapImage.naturalHeight);
+    createInteractiveMap();
+  } else {
+    mapImage.addEventListener('load', () => {
+      console.log('Карта загружена, размеры:', mapImage.naturalWidth, 'x', mapImage.naturalHeight);
+      createInteractiveMap();
+    });
+
+    mapImage.addEventListener('error', (e) => {
+      console.error('Ошибка загрузки карты:', e);
+      alert('Не удалось загрузить карту. Проверьте подключение к интернету.');
+    });
+  }
+
+  // Автоматически выбираем Липецк через 1000мс
   setTimeout(() => {
     selectMunicipality(1, 'г. Липецк');
-  }, 500);
+  }, 1000);
 });
 </script>
 
