@@ -1,0 +1,933 @@
+{
+  "type": "FeatureCollection",
+  "generator": "overpass-turbo",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+  "timestamp": "2025-10-10T10:08:58Z",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1113196",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Грязинский район",
+        "name:ca": "Districte de Griazi",
+        "name:en": "Gryazinsky District",
+        "name:ru": "Грязинский район",
+        "name:uk": "Грязінський район",
+        "official_status": "ru:муниципальный район",
+        "type": "boundary",
+        "wikidata": "Q2217621",
+        "wikipedia": "ru:Грязинский район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              39.4166391,
+              52.2894014
+            ],
+            [
+              40.2287413,
+              52.2894014
+            ],
+            [
+              40.2287413,
+              52.7299052
+            ],
+            [
+              39.4166391,
+              52.7299052
+            ],
+            [
+              39.4166391,
+              52.2894014
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1113196"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1113569",
+        "addr:country": "RU",
+        "addr:region": "Липецкая область",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Воловский муниципальный округ",
+        "name:en": "Volovsky District",
+        "name:uk": "Волівський район",
+        "official_status": "ru:муниципальный округ",
+        "type": "boundary",
+        "wikidata": "Q1770281",
+        "wikipedia": "ru:Воловский район (Липецкая область)",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.7380288,
+              51.8870621
+            ],
+            [
+              38.2811393,
+              51.8870621
+            ],
+            [
+              38.2811393,
+              52.2527708
+            ],
+            [
+              37.7380288,
+              52.2527708
+            ],
+            [
+              37.7380288,
+              51.8870621
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1113569"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1113578",
+        "addr:country": "RU",
+        "addr:region": "Липецкая область",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Тербунский район",
+        "name:en": "Terbunsky District",
+        "name:uk": "Тербунський район",
+        "official_status": "ru:муниципальный район",
+        "type": "boundary",
+        "wikidata": "Q1655801",
+        "wikipedia": "ru:Тербунский район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.9957543,
+              51.9634143
+            ],
+            [
+              38.8781588,
+              51.9634143
+            ],
+            [
+              38.8781588,
+              52.3243615
+            ],
+            [
+              37.9957543,
+              52.3243615
+            ],
+            [
+              37.9957543,
+              51.9634143
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1113578"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1113581",
+        "addr:region": "Липецкая область",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Добринский район",
+        "name:en": "Dobrinsky District",
+        "name:lt": "Dobrinkos rajonas",
+        "name:uk": "Добринський район",
+        "name:zh": "多布林斯基区",
+        "official_status": "ru:муниципальный район",
+        "ref": "42 212",
+        "type": "boundary",
+        "wikidata": "Q2217673",
+        "wikipedia": "ru:Добринский район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              40.0303608,
+              51.9352059
+            ],
+            [
+              40.7647752,
+              51.9352059
+            ],
+            [
+              40.7647752,
+              52.4670582
+            ],
+            [
+              40.0303608,
+              52.4670582
+            ],
+            [
+              40.0303608,
+              51.9352059
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1113581"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1113711",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Липецкий муниципальный округ",
+        "name:de": "Rajon Lipezk",
+        "name:en": "Lipetsky District",
+        "name:ru": "Липецкий муниципальный округ",
+        "name:uk": "Липецький район",
+        "official_status": "ru:муниципальный округ",
+        "oktmo:user": "42640000",
+        "type": "boundary",
+        "wikidata": "Q2263898",
+        "wikipedia": "ru:Липецкий район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              39.0122668,
+              52.2802265
+            ],
+            [
+              39.7456461,
+              52.2802265
+            ],
+            [
+              39.7456461,
+              52.8522035
+            ],
+            [
+              39.0122668,
+              52.8522035
+            ],
+            [
+              39.0122668,
+              52.2802265
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1113711"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1113768",
+        "addr:country": "RU",
+        "addr:region": "Липецкая область",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Усманский район",
+        "name:de": "Bezirk Usman",
+        "name:en": "Usmansky District",
+        "name:uk": "Усманський район",
+        "official_status": "ru:муниципальный район",
+        "type": "boundary",
+        "wikidata": "Q1658666",
+        "wikipedia": "ru:Усманский район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              39.3356359,
+              51.9202915
+            ],
+            [
+              40.1477693,
+              51.9202915
+            ],
+            [
+              40.1477693,
+              52.3552413
+            ],
+            [
+              39.3356359,
+              52.3552413
+            ],
+            [
+              39.3356359,
+              51.9202915
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1113768"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1113771",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Добровский муниципальный округ",
+        "name:en": "Dobrovsky District",
+        "name:uk": "Добровський район",
+        "official_status": "ru:муниципальный округ",
+        "type": "boundary",
+        "wikidata": "Q2216948",
+        "wikipedia": "ru:Добровский район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              39.3851815,
+              52.695458
+            ],
+            [
+              40.125276,
+              52.695458
+            ],
+            [
+              40.125276,
+              53.1023209
+            ],
+            [
+              39.3851815,
+              53.1023209
+            ],
+            [
+              39.3851815,
+              52.695458
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1113771"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1114800",
+        "addr:country": "RU",
+        "addr:region": "Липецкая область",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Чаплыгинский район",
+        "name:en": "Chaplyginsky District",
+        "name:uk": "Чаплигинський район",
+        "official_status": "ru:муниципальный район",
+        "type": "boundary",
+        "wikidata": "Q1651493",
+        "wikipedia": "ru:Чаплыгинский район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              39.5423297,
+              52.9608365
+            ],
+            [
+              40.1791459,
+              52.9608365
+            ],
+            [
+              40.1791459,
+              53.5866538
+            ],
+            [
+              39.5423297,
+              53.5866538
+            ],
+            [
+              39.5423297,
+              52.9608365
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1114800"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1114801",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Лев-Толстовский район",
+        "name:en": "Lev-Tolstovsky District",
+        "name:uk": "Лев-Толстовський район",
+        "official_status": "ru:муниципальный район",
+        "type": "boundary",
+        "wikidata": "Q2217246",
+        "wikipedia": "ru:Лев-Толстовский район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              39.2136869,
+              53.043302
+            ],
+            [
+              39.8393406,
+              53.043302
+            ],
+            [
+              39.8393406,
+              53.4338978
+            ],
+            [
+              39.2136869,
+              53.4338978
+            ],
+            [
+              39.2136869,
+              53.043302
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1114801"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1114805",
+        "addr:country": "RU",
+        "addr:region": "Липецкая область",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Данковский район",
+        "name:en": "Dankovsky District",
+        "name:uk": "Данківський район",
+        "name:zh": "丹科夫斯基区",
+        "official_status": "ru:муниципальный район",
+        "type": "boundary",
+        "wikidata": "Q2217587",
+        "wikipedia": "ru:Данковский район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              38.5289111,
+              53.0752527
+            ],
+            [
+              39.4152897,
+              53.0752527
+            ],
+            [
+              39.4152897,
+              53.5792271
+            ],
+            [
+              38.5289111,
+              53.5792271
+            ],
+            [
+              38.5289111,
+              53.0752527
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1114805"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1114884",
+        "addr:country": "RU",
+        "addr:region": "Липецкая область",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Лебедянский район",
+        "name:en": "Lebedyansky District",
+        "name:lt": "Lebedianės rajonas",
+        "name:ru": "Лебедянский район",
+        "name:uk": "Лебедянський район",
+        "official_status": "ru:муниципальный район",
+        "type": "boundary",
+        "wikidata": "Q1653028",
+        "wikipedia": "ru:Лебедянский район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              38.6463205,
+              52.742897
+            ],
+            [
+              39.5362557,
+              52.742897
+            ],
+            [
+              39.5362557,
+              53.1618737
+            ],
+            [
+              38.6463205,
+              53.1618737
+            ],
+            [
+              38.6463205,
+              52.742897
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1114884"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1114903",
+        "addr:country": "RU",
+        "addr:region": "Липецкая область",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Краснинский район",
+        "name:lt": "Krasnojės rajonas",
+        "name:ru": "Краснинский район",
+        "name:uk": "Краснінський район",
+        "official_status": "ru:муниципальный район",
+        "type": "boundary",
+        "wikidata": "Q1759532",
+        "wikipedia": "ru:Краснинский район (Липецкая область)",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              38.4999948,
+              52.7020596
+            ],
+            [
+              39.0287118,
+              52.7020596
+            ],
+            [
+              39.0287118,
+              53.0887681
+            ],
+            [
+              38.4999948,
+              53.0887681
+            ],
+            [
+              38.4999948,
+              52.7020596
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1114903"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1114910",
+        "addr:region": "Липецкая область",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Задонский район",
+        "name:en": "Zadonsky District",
+        "name:uk": "Задонський район",
+        "official_status": "ru:муниципальный район",
+        "type": "boundary",
+        "wikidata": "Q2217766",
+        "wikipedia": "ru:Задонский район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              38.6321673,
+              52.1373526
+            ],
+            [
+              39.2431338,
+              52.1373526
+            ],
+            [
+              39.2431338,
+              52.7987751
+            ],
+            [
+              38.6321673,
+              52.7987751
+            ],
+            [
+              38.6321673,
+              52.1373526
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1114910"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1114911",
+        "addr:country": "RU",
+        "addr:region": "Липецкая область",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Хлевенский район",
+        "name:en": "Khlevensky District",
+        "name:uk": "Хлівенський район",
+        "official_status": "ru:муниципальный район",
+        "type": "boundary",
+        "wikidata": "Q1652503",
+        "wikipedia": "ru:Хлевенский район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              38.7994423,
+              51.9831294
+            ],
+            [
+              39.4069464,
+              51.9831294
+            ],
+            [
+              39.4069464,
+              52.3501362
+            ],
+            [
+              38.7994423,
+              52.3501362
+            ],
+            [
+              38.7994423,
+              51.9831294
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1114911"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1116513",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Елецкий район",
+        "name:en": "Yeletsky District",
+        "name:uk": "Єлецький район",
+        "official_status": "ru:муниципальный район",
+        "type": "boundary",
+        "wikidata": "Q2217116",
+        "wikipedia": "ru:Елецкий район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              38.1273444,
+              52.3910859
+            ],
+            [
+              38.9431072,
+              52.3910859
+            ],
+            [
+              38.9431072,
+              52.7850999
+            ],
+            [
+              38.1273444,
+              52.7850999
+            ],
+            [
+              38.1273444,
+              52.3910859
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1116513"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1116708",
+        "addr:country": "RU",
+        "addr:region": "Липецкая область",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Долгоруковский район",
+        "name:en": "Dolgorukovsky District",
+        "name:uk": "Долгоруківський район",
+        "official_status": "ru:муниципальный район",
+        "type": "boundary",
+        "wikidata": "Q923888",
+        "wikipedia": "ru:Долгоруковский район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.9880795,
+              52.1834621
+            ],
+            [
+              38.710126,
+              52.1834621
+            ],
+            [
+              38.710126,
+              52.5028863
+            ],
+            [
+              37.9880795,
+              52.5028863
+            ],
+            [
+              37.9880795,
+              52.1834621
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1116708"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1116714",
+        "addr:country": "RU",
+        "addr:region": "Липецкая область",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Измалковский муниципальный округ",
+        "name:en": "Izmalkovsky District",
+        "name:uk": "Ізмалківський район",
+        "official_status": "ru:муниципальный округ",
+        "type": "boundary",
+        "wikidata": "Q2217597",
+        "wikipedia": "ru:Измалковский район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.7217164,
+              52.3899565
+            ],
+            [
+              38.2981052,
+              52.3899565
+            ],
+            [
+              38.2981052,
+              52.9303628
+            ],
+            [
+              37.7217164,
+              52.9303628
+            ],
+            [
+              37.7217164,
+              52.3899565
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1116714"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1116715",
+        "addr:country": "RU",
+        "addr:region": "Липецкая область",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "Становлянский муниципальный округ",
+        "name:en": "Stanovlyansky District",
+        "name:lt": "Stanovojės rajonas",
+        "name:ru": "Становлянский муниципальный округ",
+        "name:uk": "Становлянський район",
+        "official_status": "ru:муниципальный округ",
+        "type": "boundary",
+        "wikidata": "Q1655834",
+        "wikipedia": "ru:Становлянский район",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.8322569,
+              52.6435422
+            ],
+            [
+              38.6213177,
+              52.6435422
+            ],
+            [
+              38.6213177,
+              53.055766
+            ],
+            [
+              37.8322569,
+              53.055766
+            ],
+            [
+              37.8322569,
+              52.6435422
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1116715"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/1273067",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "городской округ Липецк",
+        "name:ca": "Districte urbà de Lípetsk",
+        "name:de": "Stadtkreis Lipezk",
+        "name:en": "Lipetsk",
+        "name:ru": "городской округ Липецк",
+        "name:uk": "Міський округ Липецьк",
+        "official_name": "городской округ Город Липецк",
+        "official_status": "ru:городской округ",
+        "oktmo:user": "42701000",
+        "type": "boundary",
+        "wikidata": "Q27588357",
+        "wikipedia": "ru:Липецк",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              39.3797669,
+              52.4913826
+            ],
+            [
+              39.8116067,
+              52.4913826
+            ],
+            [
+              39.8116067,
+              52.7147776
+            ],
+            [
+              39.3797669,
+              52.7147776
+            ],
+            [
+              39.3797669,
+              52.4913826
+            ]
+          ]
+        ]
+      },
+      "id": "relation/1273067"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "relation/3515980",
+        "admin_level": "6",
+        "boundary": "administrative",
+        "name": "городской округ Елец",
+        "name:en": "Yelets",
+        "name:uk": "Міський округ Єлець",
+        "official_name": "городской округ Город Елец",
+        "official_status": "ru:городской округ",
+        "type": "boundary",
+        "wikidata": "Q27588355",
+        "wikipedia": "ru:Елец",
+        "@geometry": "bounds"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              38.4300312,
+              52.5742127
+            ],
+            [
+              38.6143707,
+              52.5742127
+            ],
+            [
+              38.6143707,
+              52.656256
+            ],
+            [
+              38.4300312,
+              52.656256
+            ],
+            [
+              38.4300312,
+              52.5742127
+            ]
+          ]
+        ]
+      },
+      "id": "relation/3515980"
+    }
+  ]
+}
