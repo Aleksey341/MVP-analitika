@@ -52,16 +52,23 @@
     .hint{font-size:13px;color:var(--text-secondary);margin-top:8px}
 
     /* постоянные подписи в центре района */
-    .leaflet-tooltip.mun-label{
-      background: rgba(0,0,0,.55);
-      border: none;
+    .mun-label {
+      background: rgba(22, 22, 22, .75);
       color: #fff;
       padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 12px;
+      border-radius: 6px;
+      line-height: 1.05;
       font-weight: 600;
+      font-size: 11px;
+      white-space: normal;
+      word-break: break-word;
+      text-align: center;
+      max-width: 160px;
+      box-shadow: 0 1px 2px rgba(0,0,0,.25);
       pointer-events: none;
     }
+    .mun-label--tiny { font-size: 10px; }
+    .mun-label--micro { font-size: 9px; }
     /* всплывающий tooltip при наведении */
     .leaflet-tooltip.hover-label{
       background: var(--bg-secondary);
@@ -146,6 +153,16 @@
       .trim();
   }
 
+  // Сокращение длинных названий для подписей
+  function shortName(name){
+    return name
+      .replace(/^городской округ\s+/i, 'г.о. ')
+      .replace(/муниципальный округ/gi, 'МО')
+      .replace(/\s+муниципальный район/gi, ' район')
+      .replace(/\s+район муниципального значения/gi, ' район')
+      .trim();
+  }
+
   // Подготовка легенды
   function makeLegend(min, max){
     const el = $('#legend-scale');
@@ -177,7 +194,7 @@
   let munNameToId = new Map(); // нормализованное имя -> id (из /api/municipalities/all)
   let lastPeriod = null;
   let gibddByMun = new Map(); // нормализованное имя -> агрегаты ДТП (последний период)
-  let labelItems = []; // хранилище постоянных подписей
+  let labelMarkers = new Map(); // featureId -> {marker, el, bounds, name}
 
   async function init(){
     // 1) Аутентификация (если нужно)
@@ -225,11 +242,6 @@
       maxZoom: 18
     }).addTo(map);
 
-    // Панель для постоянных подписей (поверх полигонов)
-    const labelPane = map.createPane('labels');
-    labelPane.style.zIndex = 650;
-    labelPane.style.pointerEvents = 'none';
-
     // 5) Подгрузка GeoJSON
     const gj = await fetch('/geo/lipetsk-municipalities.geojson');
     const geojson = await gj.json();
@@ -268,7 +280,7 @@
       onEachFeature: (feature, layer)=>{
         const displayName = feature.properties['name:ru'] || feature.properties.name;
 
-        // Всплывающая подсказка при наведении
+        // Всплывающая подсказка с полным названием при наведении
         layer.bindTooltip(displayName, {
           permanent: false,
           sticky: true,
@@ -277,7 +289,7 @@
         });
 
         // Постоянная подпись в центре района
-        addFeatureLabel(layer, displayName);
+        addLabelForFeature(feature, layer);
 
         layer.on('click', ()=>{
           selectMunicipality(displayName);
@@ -287,43 +299,66 @@
       }
     }).addTo(map);
 
-    // Обновляем подписи при движении/масштабе
-    map.on('zoomend moveend', refreshLabels);
-    refreshLabels();
+    // Обновляем подписи при изменении зума и размера окна
+    map.on('zoomend', () => {
+      labelMarkers.forEach(entry => fitLabelToBounds(entry));
+    });
+    map.on('resize', () => {
+      labelMarkers.forEach(entry => fitLabelToBounds(entry));
+    });
 
     // Автовыбор Липецка при старте
     setTimeout(()=>selectMunicipality('городской округ Липецк'), 400);
   }
 
-  // Функция добавления постоянной подписи
-  function addFeatureLabel(layer, name){
-    const center = layer.getBounds().getCenter();
-    const t = L.tooltip({
-      pane: 'labels',
-      permanent: true,
-      direction: 'center',
-      className: 'mun-label',
-      opacity: 0.95
-    })
-      .setContent(name)
-      .setLatLng(center)
-      .addTo(map);
+  // Добавление постоянной подписи для района
+  function addLabelForFeature(feature, layer){
+    const fullName = feature.properties['name:ru'] || feature.properties.name || '';
+    const name = shortName(fullName);
+    if (!name) return;
 
-    labelItems.push({ tooltip: t, layer });
+    const bounds = layer.getBounds();
+    const center = bounds.getCenter();
+
+    const el = document.createElement('div');
+    el.className = 'mun-label';
+    el.textContent = name;
+    el.title = fullName; // браузерный tooltip с полным именем
+
+    const marker = L.marker(center, {
+      icon: L.divIcon({
+        className: '',
+        html: el,
+        iconSize: null
+      }),
+      interactive: false
+    }).addTo(map);
+
+    labelMarkers.set(L.Util.stamp(layer), { marker, el, bounds, name });
+    fitLabelToBounds({ el, bounds, name }); // первичная подгонка
   }
 
-  // Показывать подписи только начиная с определённого масштаба
-  function refreshLabels(){
-    const show = map.getZoom() >= 8;  // порог можно подобрать (7–10)
-    labelItems.forEach(({ tooltip, layer }) => {
-      if (show) {
-        // держим подпись по центру при перемещении/масштабировании
-        tooltip.setLatLng(layer.getBounds().getCenter());
-        if (!map.hasLayer(tooltip)) map.addLayer(tooltip);
-      } else {
-        if (map.hasLayer(tooltip)) map.removeLayer(tooltip);
-      }
-    });
+  // Вычисление ширины bbox в пикселях и подбор размера шрифта
+  function fitLabelToBounds({ el, bounds, name }){
+    const ne = map.latLngToLayerPoint(bounds.getNorthEast());
+    const sw = map.latLngToLayerPoint(bounds.getSouthWest());
+    const widthPx = Math.max(40, Math.min(200, Math.abs(ne.x - sw.x) - 12));
+
+    el.style.maxWidth = widthPx + 'px';
+
+    // Базовый размер зависит от зума
+    const z = map.getZoom();
+    let fs = 9 + Math.max(0, z - 8) * 0.9;
+    fs = Math.min(13, Math.max(9, fs));
+
+    // Если имя очень длинное — уменьшаем чуть сильнее
+    if (name.length > 20) fs -= 0.5;
+    if (name.length > 28) fs -= 1;
+
+    // Применяем классы для разных размеров
+    el.classList.toggle('mun-label--tiny', fs <= 10);
+    el.classList.toggle('mun-label--micro', fs < 10);
+    el.style.fontSize = fs + 'px';
   }
 
   function selectMunicipality(displayName){
