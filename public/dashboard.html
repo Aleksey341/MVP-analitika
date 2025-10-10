@@ -1271,34 +1271,8 @@ async function renderHeatmapDTP(){
     const filters = getFilters();
     const year = filters.year;
 
-    // Загружаем список муниципалитетов
-    const munResponse = await fetch('/api/municipalities/all');
-    const municipalities = await munResponse.json();
-
-    // Загружаем данные за все 12 месяцев
-    const heatmapData = [];
-
-    for(const mun of municipalities){ // Показываем все муниципалитеты
-      const munData = {
-        municipality: mun.name,
-        municipalityId: mun.id,
-        months: []
-      };
-
-      for(let m = 1; m <= 12; m++){
-        const period = `${year}-${String(m).padStart(2, '0')}`;
-        try{
-          const data = await fetch(`/api/gibdd/data?period=${period}`, {credentials: 'include'}).then(r=>r.json());
-          const munRow = data.find(row => row.municipality_id === mun.id);
-          const dtpCount = munRow ? Number(munRow.dtp_total || 0) : 0;
-          munData.months.push(dtpCount);
-        }catch(e){
-          munData.months.push(0);
-        }
-      }
-
-      heatmapData.push(munData);
-    }
+    // Загружаем данные за весь год одним запросом (оптимизация!)
+    const heatmapData = await fetch(`/api/gibdd/heatmap?year=${year}`, {credentials: 'include'}).then(r => r.json());
 
     // Определяем max значение для цветовой шкалы
     const allValues = heatmapData.flatMap(row => row.months);
@@ -1314,12 +1288,12 @@ async function renderHeatmapDTP(){
     html += '</tr></thead><tbody>';
 
     heatmapData.forEach(row => {
-      html += `<tr><td style="text-align:left;font-weight:600;background:var(--bg-tertiary)">${row.municipality}</td>`;
+      html += `<tr><td style="text-align:left;font-weight:600;background:var(--bg-tertiary)">${row.municipality_name}</td>`;
       row.months.forEach((value, monthIdx) => {
         // Определяем уровень интенсивности (0-5)
         const intensity = value === 0 ? 0 : Math.min(5, Math.ceil((value / maxValue) * 5));
-        const tooltip = `${row.municipality} - ${monthNames[monthIdx]}: ${value} ДТП`;
-        html += `<td class="heatmap-cell-${intensity}" data-tooltip="${tooltip}" onclick="onHeatmapClick('${row.municipalityId}','${monthIdx+1}')">${value || '-'}</td>`;
+        const tooltip = `${row.municipality_name} - ${monthNames[monthIdx]}: ${value} ДТП`;
+        html += `<td class="heatmap-cell-${intensity}" data-tooltip="${tooltip}" onclick="onHeatmapClick('${row.municipality_id}','${monthIdx+1}')">${value || '-'}</td>`;
       });
       html += '</tr>';
     });

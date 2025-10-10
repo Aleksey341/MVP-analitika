@@ -260,6 +260,66 @@ router.get('/periods', requireAuth, async (req, res, next) => {
   }
 });
 
+/**
+ * GET /api/gibdd/heatmap
+ * Get heatmap data for all municipalities for a year
+ * Optimized endpoint: returns all data in one request
+ */
+router.get('/heatmap', requireAuth, async (req, res, next) => {
+  try {
+    const { year } = req.query;
+
+    if (!year) {
+      return res.status(400).json({
+        error: 'bad_request',
+        message: 'Параметр year обязателен'
+      });
+    }
+
+    // Get all data for the year in one query
+    const { rows } = await pool.query(`
+      SELECT
+        g.municipality_id,
+        m.name as municipality_name,
+        EXTRACT(MONTH FROM g.period)::INTEGER as month,
+        g.dtp_total
+      FROM gibdd_data g
+      JOIN municipalities m ON m.id = g.municipality_id
+      WHERE EXTRACT(YEAR FROM g.period) = $1
+      ORDER BY m.name, month
+    `, [parseInt(year)]);
+
+    // Get all municipalities
+    const { rows: municipalities } = await pool.query(`
+      SELECT id, name FROM municipalities ORDER BY name
+    `);
+
+    // Build heatmap structure
+    const heatmapData = municipalities.map(mun => {
+      const munRows = rows.filter(r => r.municipality_id === mun.id);
+      const months = Array(12).fill(0);
+
+      munRows.forEach(row => {
+        const monthIndex = row.month - 1; // 0-based index
+        months[monthIndex] = parseInt(row.dtp_total) || 0;
+      });
+
+      return {
+        municipality_id: mun.id,
+        municipality_name: mun.name,
+        months: months,
+        total: months.reduce((sum, val) => sum + val, 0)
+      };
+    });
+
+    return res.json(heatmapData);
+
+  } catch (err) {
+    console.error('[GIBDD] Heatmap error:', err);
+    next(err);
+  }
+});
+
 /* ========== Helper Functions ========== */
 
 function parsePeriodFromSheetName(sheetName) {
