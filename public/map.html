@@ -94,6 +94,20 @@
 
     /* чтобы SVG-трансформы работали в Leaflet */
     .leaflet-overlay-pane svg { overflow: visible; }
+
+    /* убираем прямоугольник фокуса у векторных объектов */
+    .leaflet-container .leaflet-interactive:focus,
+    .leaflet-container .leaflet-pane svg path:focus,
+    .leaflet-container .leaflet-marker-icon:focus,
+    .leaflet-container .leaflet-tile:focus,
+    .leaflet-container:focus {
+      outline: none !important;
+    }
+
+    /* чтобы на мобильных не появлялся полупрозрачный highlight */
+    .leaflet-container .leaflet-interactive {
+      -webkit-tap-highlight-color: transparent;
+    }
   </style>
 </head>
 <body>
@@ -316,9 +330,17 @@
 
         // События
         layer.on({
-          click: () => {
+          click: (e) => {
             selectFeature(layer);
             selectMunicipality(displayName);
+
+            // Снять фокус, чтобы браузер не рисовал outline
+            if (layer._path && typeof layer._path.blur === 'function') {
+              layer._path.blur();
+            }
+            if (e.originalEvent && typeof e.originalEvent.target.blur === 'function') {
+              e.originalEvent.target.blur();
+            }
           },
           mouseover: () => {
             if (!layer._path?.classList.contains('mun-selected')) {
