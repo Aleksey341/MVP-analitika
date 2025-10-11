@@ -75,6 +75,7 @@
     .mun-label.m--sm { font-size: 11px; }
     .mun-label.m--xs { font-size: 10px; }
     .mun-label.m--xxs { font-size: 9px; }
+
     /* всплывающий tooltip при наведении */
     .leaflet-tooltip.hover-label{
       background: var(--bg-secondary);
@@ -82,6 +83,17 @@
       color: var(--text-primary);
       font-size: 12px;
     }
+
+    /* стиль выделенного полигона */
+    path.mun-selected {
+      stroke: #111827;
+      stroke-width: 3;
+      fill-opacity: 0.65;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.28));
+    }
+
+    /* чтобы SVG-трансформы работали в Leaflet */
+    .leaflet-overlay-pane svg { overflow: visible; }
   </style>
 </head>
 <body>
@@ -205,6 +217,7 @@
   let lastPeriod = null;
   let gibddByMun = new Map(); // нормализованное имя -> агрегаты ДТП (последний период)
   let labelStore = []; // хранилище подписей: {layer, el, name, marker}
+  let selectedLayer = null; // текущий выделенный полигон
 
   async function init(){
     // 1) Аутентификация (если нужно)
@@ -301,11 +314,24 @@
         // Постоянная подпись в центре района
         addLabel(feature, layer);
 
-        layer.on('click', ()=>{
-          selectMunicipality(displayName);
+        // События
+        layer.on({
+          click: () => {
+            selectFeature(layer);
+            selectMunicipality(displayName);
+          },
+          mouseover: () => {
+            if (!layer._path?.classList.contains('mun-selected')) {
+              layer.setStyle({ weight: 2, color: '#60a5fa' });
+              layer.bringToFront();
+            }
+          },
+          mouseout: () => {
+            if (!layer._path?.classList.contains('mun-selected')) {
+              layer.setStyle({ weight: 1.2, color: '#334155' });
+            }
+          }
         });
-        layer.on('mouseover', ()=> layer.setStyle({weight:2, color:'#60a5fa'}));
-        layer.on('mouseout',  ()=> layer.setStyle({weight:1.2, color:'#334155'}));
       }
     }).addTo(map);
 
@@ -313,8 +339,24 @@
     map.on('zoomend resize moveend', refreshLabels);
     refreshLabels(); // первичная подгонка
 
+    // Клик по пустой карте — снять выделение
+    map.on('click', e => {
+      if (e.originalEvent?.target?.closest('.leaflet-interactive')) return;
+      resetSelection();
+    });
+
     // Автовыбор Липецка при старте
-    setTimeout(()=>selectMunicipality('городской округ Липецк'), 400);
+    setTimeout(()=>{
+      const lipetskName = 'городской округ Липецк';
+      selectMunicipality(lipetskName);
+      // Найти и выделить слой Липецка
+      geoLayer.eachLayer(layer => {
+        const name = layer.feature?.properties?.['name:ru'] || layer.feature?.properties?.name;
+        if (name === lipetskName) {
+          selectFeature(layer);
+        }
+      });
+    }, 400);
   }
 
   // Добавление постоянной подписи для района
@@ -372,6 +414,29 @@
       const tooNarrow = widthPx < 45;
       el.style.display = tooNarrow ? 'none' : 'block';
     });
+  }
+
+  // Выделение полигона при клике
+  function selectFeature(layer){
+    // Снять выделение с предыдущего
+    if (selectedLayer && selectedLayer._path) {
+      selectedLayer._path.classList.remove('mun-selected');
+    }
+    // Поднять текущий слой над остальными
+    layer.bringToFront();
+
+    // Добавить класс выделения
+    if (layer._path) layer._path.classList.add('mun-selected');
+
+    selectedLayer = layer;
+  }
+
+  // Сброс выделения
+  function resetSelection(){
+    if (selectedLayer && selectedLayer._path) {
+      selectedLayer._path.classList.remove('mun-selected');
+    }
+    selectedLayer = null;
   }
 
   function selectMunicipality(displayName){
