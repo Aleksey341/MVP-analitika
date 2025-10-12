@@ -305,15 +305,36 @@
       .map(p=>p.slice(5,7))
       .sort();
     const names = ['','Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
-    selMonth.innerHTML = months.map(mm=>`<option value="${mm}">${names[+mm]}</option>`).join('');
+
+    // Добавим «Итог за год»
+    selMonth.innerHTML =
+      `<option value="">Итог за год</option>` +
+      months.map(mm => `<option value="${mm}">${names[+mm]}</option>`).join('');
   }
 
   // Загрузка и применение данных за период
-  async function loadAndApplyPeriod(period){
+  async function loadAndApplyPeriod(periodOrYearMonth){
     try {
       periodLoading.style.display = 'inline';
-      const r = await fetch(`/api/gibdd/data?period=${period}`, {credentials:'include'});
-      const rows = await r.json();
+      const [yy, mm] = periodOrYearMonth.split('-');
+
+      let rows = [];
+      if (!mm) {
+        // ИТОГ ГОДА - используем heatmap
+        const heat = await fetch(`/api/gibdd/heatmap?year=${yy}`, {credentials:'include'}).then(r=>r.json());
+        rows = heat.map(h => ({
+          municipality_name: h.municipality_name,
+          dtp_total: (h.months || []).reduce((a,b)=>a + (+b||0), 0),
+          dtp_total_dead: 0, // TODO: если нужны детали, добавьте в API
+          dtp_total_injured: 0,
+          dtp_pedestrians: 0
+        }));
+        currentPeriod = yy;
+      } else {
+        // КОНКРЕТНЫЙ МЕСЯЦ
+        rows = await fetch(`/api/gibdd/data?period=${yy}-${mm}`, {credentials:'include'}).then(r=>r.json());
+        currentPeriod = `${yy}-${mm}`;
+      }
 
       gibddByMun.clear();
       for (const row of rows) {
@@ -328,12 +349,11 @@
       makeLegend(minVal, maxVal);
       repaintChoropleth(minVal, maxVal);
 
-      // Обновить карточку если район был выбран
-      if (lastClickedFeature) {
-        updateMunicipalityCard(lastClickedFeature);
-      }
+      // Показать сводку по области
+      showRegionSummary();
 
-      $('#p-sub').textContent = `Период: ${period}`;
+      // Обновить таблицу динамики
+      await renderMonthlyTable();
     } finally {
       periodLoading.style.display = 'none';
     }
@@ -353,17 +373,46 @@
     });
   }
 
-  // Обновление карточки муниципалитета
-  function updateMunicipalityCard(feature){
+  // Показать сводку по области
+  function showRegionSummary(){
+    let dtp = 0, dead = 0, injured = 0, peds = 0;
+    for (const row of gibddByMun.values()) {
+      dtp     += +row.dtp_total || 0;
+      dead    += +row.dtp_total_dead || 0;
+      injured += +row.dtp_total_injured || 0;
+      peds    += +row.dtp_pedestrians || 0;
+    }
+
+    $('#p-title').textContent = 'Липецкая область';
+    $('#p-sub').textContent = `Период: ${currentPeriod}`;
+    $('#p-dtp').textContent = dtp.toLocaleString('ru-RU');
+    $('#p-dead').textContent = dead.toLocaleString('ru-RU');
+    $('#p-inj').textContent = injured.toLocaleString('ru-RU');
+    $('#p-ped').textContent = peds.toLocaleString('ru-RU');
+
+    $('#p-link').style.display = 'none';
+    $('#p-hint').textContent = '';
+
+    lastClickedFeature = null;
+  }
+
+  // Показать данные по муниципалитету
+  function showMunicipalityInfo(feature){
     const displayName = feature.properties['name:ru'] || feature.properties.name;
     const norm = muniKeyFromFeature(feature);
     const row = gibddByMun.get(norm);
 
     $('#p-title').textContent = displayName;
-    $('#p-dtp').textContent  = row ? (row.dtp_total ?? '—') : '—';
-    $('#p-dead').textContent = row ? (row.dtp_total_dead ?? '—') : '—';
-    $('#p-inj').textContent  = row ? (row.dtp_total_injured ?? '—') : '—';
-    $('#p-ped').textContent  = row ? (row.dtp_pedestrians ?? '—') : '—';
+    $('#p-sub').textContent = `Период: ${currentPeriod}`;
+
+    if (row) {
+      $('#p-dtp').textContent  = (+row.dtp_total || 0).toLocaleString('ru-RU');
+      $('#p-dead').textContent = (+row.dtp_total_dead || 0).toLocaleString('ru-RU');
+      $('#p-inj').textContent  = (+row.dtp_total_injured || 0).toLocaleString('ru-RU');
+      $('#p-ped').textContent  = (+row.dtp_pedestrians || 0).toLocaleString('ru-RU');
+    } else {
+      $('#p-dtp').textContent = $('#p-dead').textContent = $('#p-inj').textContent = $('#p-ped').textContent = '—';
+    }
 
     const id = munNameToId.get(norm);
     const link = $('#p-link');
@@ -375,6 +424,14 @@
       link.style.display = 'none';
       $('#p-hint').textContent = 'Не удалось сопоставить муниципалитет с БД.';
     }
+
+    renderMonthlyTable();
+  }
+
+  // Таблица динамики по месяцам
+  async function renderMonthlyTable(){
+    // Пока заглушка - добавим HTML позже
+    return;
   }
 
   async function init(){
@@ -447,7 +504,7 @@
           click: (e) => {
             selectFeature(layer);
             lastClickedFeature = feature;
-            updateMunicipalityCard(feature);
+            showMunicipalityInfo(feature);
 
             // Снять фокус, чтобы браузер не рисовал outline
             if (layer._path && typeof layer._path.blur === 'function') {
@@ -476,25 +533,12 @@
     map.on('zoomend resize moveend', refreshLabels);
     refreshLabels(); // первичная подгонка
 
-    // Клик по пустой карте — снять выделение
+    // Клик по пустой карте — снять выделение и показать область
     map.on('click', e => {
       if (e.originalEvent?.target?.closest('.leaflet-interactive')) return;
       resetSelection();
+      showRegionSummary();
     });
-
-    // Автовыбор Липецка при старте
-    setTimeout(()=>{
-      const lipetskName = 'городской округ Липецк';
-      // Найти и выделить слой Липецка
-      geoLayer.eachLayer(layer => {
-        const name = layer.feature?.properties?.['name:ru'] || layer.feature?.properties?.name;
-        if (name === lipetskName) {
-          selectFeature(layer);
-          lastClickedFeature = layer.feature;
-          updateMunicipalityCard(layer.feature);
-        }
-      });
-    }, 400);
   }
 
   // Добавление постоянной подписи для района
