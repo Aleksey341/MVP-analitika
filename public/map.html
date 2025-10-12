@@ -108,6 +108,16 @@
     .leaflet-container .leaflet-interactive {
       -webkit-tap-highlight-color: transparent;
     }
+
+    /* Таблица динамики по месяцам */
+    .monthly-table { width:100%; border-collapse:collapse; }
+    .monthly-table th, .monthly-table td { padding:8px 10px; border-top:1px solid var(--border); }
+    .monthly-table th { text-align:left; border-top:none; border-bottom:2px solid var(--border); color:var(--text-secondary); font-size:12px; }
+    .monthly-table td { font-size:13px; }
+    .monthly-table td:last-child { text-align:right; font-variant-numeric: tabular-nums; }
+    .monthly-bar { height:6px; border-radius:4px; background:var(--accent); opacity:.25; margin-top:4px; }
+    .monthly-bar .fill { height:100%; border-radius:4px; background:var(--accent); }
+    .monthly-row-active { background:rgba(37,99,235,.08); }
   </style>
 </head>
 <body>
@@ -166,6 +176,12 @@
 
         <a id="p-link" href="#" class="btn-wide" style="display:none">Открыть подробный отчёт →</a>
         <div class="hint" id="p-hint"></div>
+
+        <!-- Блок динамики -->
+        <div id="box-monthly" class="chart-container" style="margin-top:16px">
+          <div class="chart-title" style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text-primary)">Динамика ДТП по месяцам</div>
+          <div id="monthlyTableWrap"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -430,8 +446,54 @@
 
   // Таблица динамики по месяцам
   async function renderMonthlyTable(){
-    // Пока заглушка - добавим HTML позже
-    return;
+    const year = selYear.value;
+    const month = selMonth.value; // "" = «Итог за год»
+    const monthNames = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+
+    try {
+      // Берём сводку по году (для таблицы нужна именно годовая серия)
+      const heat = await fetch(`/api/gibdd/heatmap?year=${year}`, {credentials:'include'}).then(r=>r.json());
+
+      // series = по области или по выбранному МО
+      let series = new Array(12).fill(0);
+      if (lastClickedFeature) {
+        const key = muniKeyFromFeature(lastClickedFeature);
+        const row = heat.find(h =>
+          normalizeName(h.municipality_name || '') === key
+        );
+        if (row && Array.isArray(row.months)) series = row.months.map(v => +v || 0);
+      } else {
+        // сумма по области
+        for (const h of heat) (h.months || []).forEach((v,i)=> series[i]+= (+v||0));
+      }
+
+      const max = Math.max(1, ...series);
+      const activeIdx = month ? (+month - 1) : -1;
+
+      const rowsHtml = series.map((val, i) => {
+        const w = Math.round((val / max) * 100);
+        const cls = (i === activeIdx) ? 'monthly-row-active' : '';
+        return `
+          <tr class="${cls}">
+            <td>${monthNames[i]}</td>
+            <td>
+              <div class="monthly-bar"><div class="fill" style="width:${w}%"></div></div>
+              ${val.toLocaleString('ru-RU')}
+            </td>
+          </tr>`;
+      }).join('');
+
+      $('#monthlyTableWrap').innerHTML = `
+        <table class="monthly-table">
+          <thead>
+            <tr><th>Месяц</th><th>ДТП</th></tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>`;
+    } catch(e) {
+      console.warn('Ошибка загрузки динамики по месяцам:', e);
+      $('#monthlyTableWrap').innerHTML = '<div style="padding:10px;color:var(--muted)">Данные недоступны</div>';
+    }
   }
 
   async function init(){
