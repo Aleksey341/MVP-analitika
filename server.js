@@ -160,10 +160,12 @@ app.get('/api/health', healthHandler);
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const gibddRoutes = require('./routes/gibdd');
+const projectsRoutes = require('./routes/projects');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/gibdd', gibddRoutes);
+app.use('/api/projects', projectsRoutes);
 
 try {
   const servicesDashboardRoutes = require('./routes/services');
