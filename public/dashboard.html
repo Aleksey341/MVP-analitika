@@ -2598,7 +2598,7 @@ function renderProjectCards(items, projectsData) {
     const data = dataMap[item.id] || {};
     const dynamicText = data.dynamic_text || 'Нет данных';
     const planText = data.plan_text || 'Нет данных';
-    const value = data.dynamic_value || data.fact_percent || data.contract_percent || 0;
+    const value = parseFloat(data.dynamic_value || data.fact_percent || data.contract_percent || 0);
 
     return `
       <div class="kpi-card" style="min-height:200px;display:flex;flex-direction:column;justify-content:space-between">
