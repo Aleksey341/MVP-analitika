@@ -2661,6 +2661,159 @@ $('#btnBackToGrid').addEventListener('click', () => {
   renderProjectsGrid();
 });
 
+
+
+// ========================================
+// СЕЛЬСКОЕ ХОЗЯЙСТВО
+// ========================================
+
+let agricultureCatalog = [];
+let currentAgricultureCode = null;
+
+// Загрузка каталога
+async function loadAgricultureCatalog() {
+  try {
+    const res = await fetch('/api/agriculture/catalog', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+    if (!res.ok) throw new Error('Ошибка загрузки каталога');
+
+    agricultureCatalog = await res.json();
+    renderAgricultureGrid();
+  } catch (err) {
+    console.error('Ошибка:', err);
+    showBanner('Ошибка загрузки каталога сельского хозяйства');
+  }
+}
+
+// Отображение сетки подблоков
+function renderAgricultureGrid() {
+  const grid = $('#agricultureGrid');
+  const icons = ['👮', '📊', '🏗️', '🏘️', '🌲', '🚜'];
+
+  grid.innerHTML = agricultureCatalog.map((catalog, idx) => `
+    <div class="kpi-card" style="cursor:pointer;transition:all 0.3s"
+         onclick="openAgricultureDetails('${catalog.code}', '${catalog.name}')"
+         onmouseenter="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(37,99,235,0.2)'"
+         onmouseleave="this.style.transform='';this.style.boxShadow=''">
+      <span class="kpi-icon" style="font-size:48px">${icons[idx] || '🌾'}</span>
+      <div class="kpi-label" style="font-size:15px;font-weight:600;margin-top:12px">${catalog.name}</div>
+      <div style="color:var(--text-muted);font-size:13px;margin-top:8px">Нажмите для просмотра</div>
+    </div>
+  `).join('');
+
+  $('#agricultureDetails').style.display = 'none';
+  grid.style.display = 'grid';
+}
+
+// Открытие детального просмотра подблока
+async function openAgricultureDetails(catalogCode, catalogName) {
+  currentAgricultureCode = catalogCode;
+  $('#agricultureDetailsTitle').textContent = catalogName;
+  $('#agricultureGrid').style.display = 'none';
+  $('#agricultureDetails').style.display = 'block';
+
+  await loadAgricultureCards(catalogCode);
+}
+
+// Загрузка карточек
+async function loadAgricultureCards(catalogCode) {
+  try {
+    const itemsRes = await fetch(`/api/agriculture/${catalogCode}/items`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+    if (!itemsRes.ok) throw new Error('Ошибка загрузки элементов');
+
+    const items = await itemsRes.json();
+
+    const dataRes = await fetch(`/api/agriculture/${catalogCode}/data?year=2025`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+
+    let agricultureData = [];
+    if (dataRes.ok) {
+      agricultureData = await dataRes.json();
+    }
+
+    renderAgricultureCards(items, agricultureData);
+  } catch (err) {
+    console.error('Ошибка:', err);
+    showBanner('Ошибка загрузки данных');
+  }
+}
+
+// Отображение карточек
+function renderAgricultureCards(items, agricultureData) {
+  const grid = $('#agricultureCardsGrid');
+
+  if (items.length === 0) {
+    grid.innerHTML = '<p style="padding:40px;text-align:center;color:var(--text-muted);grid-column:1/-1">Нет данных в этом разделе</p>';
+    return;
+  }
+
+  const dataMap = {};
+  agricultureData.forEach(d => {
+    if (!dataMap[d.item_id]) {
+      dataMap[d.item_id] = d;
+    }
+  });
+
+  grid.innerHTML = items.map(item => {
+    const data = dataMap[item.id] || {};
+    const valueText = data.value_text || 'Нет данных';
+    const planText = data.plan_text || data.budget || 'Нет данных';
+    const percent = parseFloat(data.percent_complete || data.construction_readiness || 0);
+
+    return `
+      <div class="kpi-card" style="min-height:200px;display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:16px;line-height:1.4">
+            ${item.name}
+          </div>
+
+          <div style="margin-bottom:12px">
+            <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px">Значение:</div>
+            <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;white-space:pre-line">${valueText}</div>
+          </div>
+
+          ${planText !== 'Нет данных' ? `
+            <div style="margin-bottom:12px">
+              <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px">План/Бюджет:</div>
+              <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;white-space:pre-line">${planText}</div>
+            </div>
+          ` : ''}
+
+          ${data.deadline ? `
+            <div style="margin-bottom:12px">
+              <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px">Срок:</div>
+              <div style="font-size:13px;color:var(--text-secondary)">${data.deadline}</div>
+            </div>
+          ` : ''}
+
+          ${data.cash_execution ? `
+            <div style="margin-bottom:12px">
+              <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px">Кассовое освоение:</div>
+              <div style="font-size:13px;color:var(--text-secondary)">${data.cash_execution}</div>
+            </div>
+          ` : ''}
+        </div>
+
+        ${percent > 0 ? `
+          <div style="text-align:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color)">
+            <div style="display:inline-block;padding:8px 20px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-radius:24px;font-weight:600;font-size:18px">
+              ${percent.toFixed(1)}%
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// Кнопка "Вернуться к списку"
+$('#btnBackToAgricultureGrid').addEventListener('click', () => {
+  renderAgricultureGrid();
+});
 </script>
 <script src="/theme.js"></script>
 </body>
