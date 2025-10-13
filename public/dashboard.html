@@ -305,6 +305,7 @@
     <button class="tab" data-tab="services">📋 Услуги</button>
     <button class="tab" data-tab="dtp">🚗 ДТП</button>
     <button class="tab" data-tab="projects">📁 Проекты</button>
+    <button class="tab" data-tab="agriculture">🌾 Сельское хозяйство</button>
   </div>
 
   <!-- Tab: Обзор -->
@@ -579,6 +580,27 @@
         <!-- Карточки проектов будут добавлены динамически -->
       </div>
     </div>
+
+  <!-- Tab: Сельское хозяйство -->
+  <div class="tab-content" id="tab-agriculture">
+    <h2 style="font-size:22px;margin-bottom:24px;color:var(--text-primary)">🌾 Сельское хозяйство</h2>
+
+    <!-- Сетка подблоков -->
+    <div id="agricultureGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:32px">
+      <!-- Карточки подблоков будут добавлены динамически -->
+    </div>
+
+    <!-- Детальный просмотр подблока -->
+    <div id="agricultureDetails" style="display:none">
+      <button id="btnBackToAgricultureGrid" class="btn" style="margin-bottom:16px">← Вернуться к списку</button>
+      <h3 id="agricultureDetailsTitle" style="font-size:20px;margin-bottom:24px;color:var(--text-primary)"></h3>
+
+      <!-- Сетка карточек элементов -->
+      <div id="agricultureCardsGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px">
+        <!-- Карточки будут добавлены динамически -->
+      </div>
+    </div>
+  </div>
   </div>
 </main>
 
@@ -2435,6 +2457,8 @@ function switchTab(tabName) {
     refreshDashboard();
   } else if (tabName === 'projects') {
     loadProjectsCatalog();
+  } else if (tabName === 'agriculture') {
+    loadAgricultureCatalog();
   }
 }
 

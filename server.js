@@ -161,11 +161,13 @@ const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const gibddRoutes = require('./routes/gibdd');
 const projectsRoutes = require('./routes/projects');
+const agricultureRoutes = require('./routes/agriculture');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/gibdd', gibddRoutes);
 app.use('/api/projects', projectsRoutes);
+app.use('/api/agriculture', agricultureRoutes);
 
 try {
   const servicesDashboardRoutes = require('./routes/services');
