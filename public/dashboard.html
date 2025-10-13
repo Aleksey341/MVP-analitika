@@ -301,101 +301,14 @@
 <main>
   <!-- Tabs Navigation -->
   <div class="tabs">
-    <button class="tab active" data-tab="overview">📊 Обзор</button>
-    <button class="tab" data-tab="services">📋 Услуги</button>
+    <button class="tab active" data-tab="services">📋 Услуги</button>
     <button class="tab" data-tab="dtp">🚗 ДТП</button>
     <button class="tab" data-tab="projects">📁 Проекты</button>
     <button class="tab" data-tab="agriculture">🌾 Сельское хозяйство</button>
   </div>
 
-  <!-- Tab: Обзор -->
-  <div class="tab-content active" id="tab-overview">
-    <h2 style="font-size:22px;margin-bottom:24px;color:var(--text-primary)">📊 Сводная статистика по всем направлениям</h2>
-
-    <!-- Ключевые показатели -->
-    <div class="kpi-grid">
-      <!-- Услуги -->
-      <div class="kpi-card">
-        <span class="kpi-icon">📋</span>
-        <div class="kpi-label">Услуг оказано</div>
-        <div class="kpi-value" id="kpi-overview-services">-</div>
-        <div class="kpi-change neutral" id="kpi-overview-services-change">
-          <span class="kpi-arrow">→</span>
-          <span>Загрузка...</span>
-        </div>
-        <canvas id="sparkline-overview-services" width="120" height="30" style="position:absolute;bottom:10px;right:10px;opacity:0.6"></canvas>
-      </div>
-
-      <!-- ДТП -->
-      <div class="kpi-card">
-        <span class="kpi-icon">🚗</span>
-        <div class="kpi-label">ДТП (всего)</div>
-        <div class="kpi-value" id="kpi-overview-dtp">-</div>
-        <div class="kpi-change neutral" id="kpi-overview-dtp-change">
-          <span class="kpi-arrow">→</span>
-          <span>Загрузка...</span>
-        </div>
-        <canvas id="sparkline-overview-dtp" width="120" height="30" style="position:absolute;bottom:10px;right:10px;opacity:0.6"></canvas>
-      </div>
-
-      <!-- Погибло -->
-      <div class="kpi-card">
-        <span class="kpi-icon">⚠️</span>
-        <div class="kpi-label">Погибло</div>
-        <div class="kpi-value" id="kpi-overview-dead">-</div>
-        <div class="kpi-change neutral" id="kpi-overview-dead-change">
-          <span class="kpi-arrow">→</span>
-          <span>Загрузка...</span>
-        </div>
-      </div>
-
-      <!-- Ранено -->
-      <div class="kpi-card">
-        <span class="kpi-icon">🏥</span>
-        <div class="kpi-label">Ранено</div>
-        <div class="kpi-value" id="kpi-overview-injured">-</div>
-        <div class="kpi-change neutral" id="kpi-overview-injured-change">
-          <span class="kpi-arrow">→</span>
-          <span>Загрузка...</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Быстрые ссылки на детальные вкладки -->
-    <div class="grid-2" style="margin-top:32px">
-      <div class="chart-container" style="cursor:pointer;transition:all 0.2s" onclick="switchTab('services')">
-        <div class="chart-title">📋 Услуги - детальная статистика</div>
-        <p style="color:var(--text-secondary);margin:12px 0">Динамика оказания услуг, ТОП услуг и распределение по категориям</p>
-        <a style="color:var(--accent-blue-light);font-weight:600;display:inline-flex;align-items:center;gap:6px">
-          Перейти к детальному отчету →
-        </a>
-      </div>
-
-      <div class="chart-container" style="cursor:pointer;transition:all 0.2s" onclick="switchTab('dtp')">
-        <div class="chart-title">🚗 ДТП - детальная статистика</div>
-        <p style="color:var(--text-secondary);margin:12px 0">Динамика ДТП, структура по категориям и ТОП муниципалитетов</p>
-        <a style="color:var(--accent-blue-light);font-weight:600;display:inline-flex;align-items:center;gap:6px">
-          Перейти к детальному отчету →
-        </a>
-      </div>
-    </div>
-
-    <!-- Мини-графики (sparklines) -->
-    <div class="grid-2" style="margin-top:24px">
-      <div class="chart-container">
-        <div class="chart-title">📈 Динамика услуг (последние 12 месяцев)</div>
-        <canvas id="chartOverviewServices" style="max-height:180px"></canvas>
-      </div>
-
-      <div class="chart-container">
-        <div class="chart-title">🚗 Динамика ДТП (последние 12 месяцев)</div>
-        <canvas id="chartOverviewDTP" style="max-height:180px"></canvas>
-      </div>
-    </div>
-  </div>
-
   <!-- Tab: Услуги -->
-  <div class="tab-content" id="tab-services">
+  <div class="tab-content active" id="tab-services">
     <!-- KPI Cards для услуг -->
     <div class="kpi-grid">
       <div class="kpi-card">
@@ -943,8 +856,6 @@ function applyQuickFilter(filterType) {
 
   // Перезагружаем данные для активной вкладки
   const activeTab = document.querySelector('.tab.active')?.getAttribute('data-tab');
-  if (activeTab === 'overview') {
-    loadOverviewData();
   } else if (activeTab === 'services') {
     loadServicesData();
   } else if (activeTab === 'dtp') {
@@ -1760,230 +1671,8 @@ async function renderSpecialCases(){
 /* ========== УСЛУГИ: Загрузка и отображение данных ========== */
 
 // Загрузка данных для вкладки "Услуги"
-// Загрузка данных для вкладки "Обзор"
-async function loadOverviewData() {
-  // Анимация появления KPI карточек
-  document.querySelectorAll('.kpi-card').forEach((card, index) => {
-    setTimeout(() => {
-      card.classList.add('scale-in');
-      setTimeout(() => card.classList.remove('scale-in'), 300);
-    }, index * 100);
-  });
 
-  try {
-    // Показываем skeleton для графиков
-    showChartSkeleton('chartOverviewServices');
-    showChartSkeleton('chartOverviewDTP');
 
-    const filters = getFilters();
-
-    // Загружаем данные услуг
-    const servicesParams = new URLSearchParams({
-      year: filters.year,
-      ...(filters.month && { month: filters.month }),
-      ...(filters.municipalityId && { municipality_id: filters.municipalityId })
-    });
-
-    const servicesResponse = await fetch(`/api/services-dashboard/data?${servicesParams}`, {
-      credentials: 'include'
-    });
-
-    if (servicesResponse.ok) {
-      const servicesData = await servicesResponse.json();
-      const current = servicesData.kpi.total_services || 0;
-      const previous = servicesData.kpi.prev_total_services || 0;
-      updateKPI('kpi-overview-services', current, previous);
-
-      // Отрисовываем мини-график услуг
-      renderOverviewServicesChart(servicesData.monthly_dynamics);
-    } else {
-      updateKPI('kpi-overview-services', 0, null);
-      renderOverviewServicesChart([]);
-    }
-
-    // Загружаем данные ДТП
-    const currentYearPeriods = await fetch(`/api/gibdd/periods`, {credentials: 'include'}).then(r=>r.json());
-
-    if (currentYearPeriods.length > 0) {
-      let latestPeriod;
-      if (filters.month) {
-        latestPeriod = `${filters.year}-${filters.month}`;
-      } else {
-        const yearPeriods = currentYearPeriods.filter(p => p.period.startsWith(filters.year));
-        if (yearPeriods.length > 0) {
-          latestPeriod = yearPeriods[0].period;
-        }
-      }
-
-      if (latestPeriod) {
-        const gibddData = await fetch(`/api/gibdd/data?period=${latestPeriod}`, {credentials: 'include'}).then(r=>r.json());
-        const filteredData = filterDataByMunicipality(gibddData, filters.municipalityId);
-
-        const totals = filteredData.reduce((acc, row) => {
-          acc.dtp += Number(row.dtp_total || 0);
-          acc.dead += Number(row.dtp_total_dead || 0);
-          acc.injured += Number(row.dtp_total_injured || 0);
-          return acc;
-        }, {dtp: 0, dead: 0, injured: 0});
-
-        // Данные предыдущего года
-        const [y, m] = latestPeriod.split('-');
-        const prevPeriod = `${Number(y) - 1}-${m}`;
-        let prevTotals = {dtp: 0, dead: 0, injured: 0};
-
-        try {
-          const prevData = await fetch(`/api/gibdd/data?period=${prevPeriod}`, {credentials: 'include'}).then(r=>r.json());
-          const filteredPrevData = filterDataByMunicipality(prevData, filters.municipalityId);
-          prevTotals = filteredPrevData.reduce((acc, row) => {
-            acc.dtp += Number(row.dtp_total || 0);
-            acc.dead += Number(row.dtp_total_dead || 0);
-            acc.injured += Number(row.dtp_total_injured || 0);
-            return acc;
-          }, {dtp: 0, dead: 0, injured: 0});
-        } catch(e) {}
-
-        updateKPI('kpi-overview-dtp', totals.dtp, prevTotals.dtp);
-        updateKPI('kpi-overview-dead', totals.dead, prevTotals.dead);
-        updateKPI('kpi-overview-injured', totals.injured, prevTotals.injured);
-
-        // Загружаем динамику ДТП за последние 12 месяцев
-        await renderOverviewDTPChart();
-      }
-    } else {
-      updateKPI('kpi-overview-dtp', 0, null);
-      updateKPI('kpi-overview-dead', 0, null);
-      updateKPI('kpi-overview-injured', 0, null);
-      renderOverviewDTPChart();
-    }
-
-  } catch (e) {
-    console.error('loadOverviewData:', e);
-    updateKPI('kpi-overview-services', 0, null);
-    updateKPI('kpi-overview-dtp', 0, null);
-    updateKPI('kpi-overview-dead', 0, null);
-    updateKPI('kpi-overview-injured', 0, null);
-  }
-}
-
-// Мини-график услуг для вкладки "Обзор"
-function renderOverviewServicesChart(monthlyData) {
-  hideChartSkeleton('chartOverviewServices');
-
-  const labels = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
-  const values = monthlyData && monthlyData.length > 0 ? monthlyData.map(m => m.total) : new Array(12).fill(0);
-
-  // Рисуем sparkline в KPI-карточке
-  drawSparkline('sparkline-overview-services', values, '#2563eb');
-
-  updateChart('chartOverviewServices', {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Услуги',
-        data: values,
-        borderColor: '#2563eb',
-        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-        tension: 0.4,
-        fill: true,
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      interaction: {
-        mode: 'index',
-        intersect: false
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: getEnhancedTooltipConfig()
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { color: getThemeColors().textColor },
-          grid: { color: getThemeColors().gridColor }
-        },
-        x: {
-          ticks: { color: getThemeColors().textColor },
-          grid: { color: getThemeColors().gridColor }
-        }
-      }
-    }
-  });
-}
-
-// Мини-график ДТП для вкладки "Обзор"
-async function renderOverviewDTPChart() {
-  try {
-    hideChartSkeleton('chartOverviewDTP');
-
-    const filters = getFilters();
-    const year = filters.year;
-
-    // Загружаем данные за все 12 месяцев текущего года
-    const monthlyTotals = [];
-    for (let month = 1; month <= 12; month++) {
-      const period = `${year}-${String(month).padStart(2, '0')}`;
-      try {
-        const data = await fetch(`/api/gibdd/data?period=${period}`, {credentials: 'include'}).then(r=>r.json());
-        const filtered = filterDataByMunicipality(data, filters.municipalityId);
-        const total = filtered.reduce((sum, row) => sum + Number(row.dtp_total || 0), 0);
-        monthlyTotals.push(total);
-      } catch (e) {
-        monthlyTotals.push(0);
-      }
-    }
-
-    const labels = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
-
-    // Рисуем sparkline в KPI-карточке
-    drawSparkline('sparkline-overview-dtp', monthlyTotals, '#ef4444');
-
-    updateChart('chartOverviewDTP', {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'ДТП',
-          data: monthlyTotals,
-          borderColor: '#ef4444',
-          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          tension: 0.4,
-          fill: true,
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        interaction: {
-          mode: 'index',
-          intersect: false
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: getEnhancedTooltipConfig()
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { color: getThemeColors().textColor },
-            grid: { color: getThemeColors().gridColor }
-          },
-          x: {
-            ticks: { color: getThemeColors().textColor },
-            grid: { color: getThemeColors().gridColor }
-          }
-        }
-      }
-    });
-  } catch (e) {
-    console.error('renderOverviewDTPChart:', e);
-  }
-}
 
 async function loadServicesData() {
   try {
@@ -2268,8 +1957,8 @@ const currentYear = new Date().getFullYear();
 // Скрываем custom filters по умолчанию (активен quick filter "Текущий год")
 $('#custom-filters').style.display = 'none';
 
-// Загружаем данные для активной вкладки (по умолчанию "Обзор")
-loadOverviewData();
+// Загружаем данные для активной вкладки (по умолчанию "Услуги")
+loadServicesData();
 
 /* ========== Этап 4: Экспорт и печать ========== */
 
@@ -2449,8 +2138,6 @@ function switchTab(tabName) {
   }
 
   // Загружаем данные для выбранной вкладки
-  if (tabName === 'overview') {
-    loadOverviewData();
   } else if (tabName === 'services') {
     loadServicesData();
   } else if (tabName === 'dtp') {
@@ -2482,8 +2169,6 @@ document.querySelectorAll('.quick-filter-btn').forEach(btn => {
 // Обработчики фильтров
 $('#year').addEventListener('change', ()=>{
   const activeTab = document.querySelector('.tab.active')?.getAttribute('data-tab');
-  if (activeTab === 'overview') {
-    loadOverviewData();
   } else if (activeTab === 'services') {
     loadServicesData();
   } else if (activeTab === 'dtp') {
@@ -2494,8 +2179,6 @@ $('#year').addEventListener('change', ()=>{
 
 $('#month').addEventListener('change', ()=>{
   const activeTab = document.querySelector('.tab.active')?.getAttribute('data-tab');
-  if (activeTab === 'overview') {
-    loadOverviewData();
   } else if (activeTab === 'services') {
     loadServicesData();
   } else if (activeTab === 'dtp') {
@@ -2506,8 +2189,6 @@ $('#month').addEventListener('change', ()=>{
 
 $('#municipality').addEventListener('change', ()=>{
   const activeTab = document.querySelector('.tab.active')?.getAttribute('data-tab');
-  if (activeTab === 'overview') {
-    loadOverviewData();
   } else if (activeTab === 'services') {
     loadServicesData();
   } else if (activeTab === 'dtp') {
