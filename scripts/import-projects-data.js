@@ -3,7 +3,6 @@
 
 'use strict';
 
-const openpyxl = require('openpyxl');
 const { Pool } = require('pg');
 require('dotenv').config();
 
