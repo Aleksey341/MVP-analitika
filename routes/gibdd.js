@@ -282,7 +282,10 @@ router.get('/heatmap', requireAuth, async (req, res, next) => {
         g.municipality_id,
         m.name as municipality_name,
         EXTRACT(MONTH FROM g.period)::INTEGER as month,
-        g.dtp_total
+        g.dtp_total,
+        g.dtp_total_dead,
+        g.dtp_total_injured,
+        g.dtp_pedestrians
       FROM gibdd_data g
       JOIN municipalities m ON m.id = g.municipality_id
       WHERE EXTRACT(YEAR FROM g.period) = $1
@@ -298,17 +301,26 @@ router.get('/heatmap', requireAuth, async (req, res, next) => {
     const heatmapData = municipalities.map(mun => {
       const munRows = rows.filter(r => r.municipality_id === mun.id);
       const months = Array(12).fill(0);
+      let totalDead = 0;
+      let totalInjured = 0;
+      let totalPedestrians = 0;
 
       munRows.forEach(row => {
         const monthIndex = row.month - 1; // 0-based index
         months[monthIndex] = parseInt(row.dtp_total) || 0;
+        totalDead += parseInt(row.dtp_total_dead) || 0;
+        totalInjured += parseInt(row.dtp_total_injured) || 0;
+        totalPedestrians += parseInt(row.dtp_pedestrians) || 0;
       });
 
       return {
         municipality_id: mun.id,
         municipality_name: mun.name,
         months: months,
-        total: months.reduce((sum, val) => sum + val, 0)
+        total: months.reduce((sum, val) => sum + val, 0),
+        total_dead: totalDead,
+        total_injured: totalInjured,
+        total_pedestrians: totalPedestrians
       };
     });
 
