@@ -1,21 +1,39 @@
 {
-  "name": "reports-system",
-  "version": "1.1.2",
-  "description": "Sistema de reportes municipales con dashboard y exportación",
+  "name": "mvp-analitika",
+  "version": "1.0.0",
+  "description": "Интерактивный дашборд оценки эффективности глав муниципальных образований Липецкой области с картой-хлороплетой, аналитикой и рейтингами.",
   "main": "server.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
     "build": "npm --prefix frontend install && npm --prefix frontend run build",
     "build:frontend": "npm --prefix frontend install && npm --prefix frontend run build",
-    "build:frontend:check": "test -f frontend/dist/index.html || (npm --prefix frontend install && npm --prefix frontend run build)",
-    "db:init": "node scripts/init-database.js",
-    "db:check": "node scripts/check-db.js",
+    "db:init": "psql $DATABASE_URL -f sql/01_schema_municipalities.sql && psql $DATABASE_URL -f sql/02_schema_facts.sql && psql $DATABASE_URL -f sql/03_seed_indicators_and_scales.sql",
+    "db:seed": "psql $DATABASE_URL -f sql/04_seed_test_data.sql",
+    "db:reset": "npm run db:init && npm run db:seed",
     "db:migrate": "node migrate.js --file \"./муниципалитеты с главами и должностями.xlsx\" --sheet \"Лист1\"",
-    "db:clear": "node scripts/clear-test-data.js",
     "seed": "node seed.js",
-    "create-admin": "node scripts/create-admin.js",
-    "postinstall": "echo 'Use npm run build:frontend to build frontend manually if needed'"
+    "test": "jest --coverage"
+  },
+  "keywords": [
+    "analytics",
+    "dashboard",
+    "municipalities",
+    "lipetsk",
+    "rating",
+    "effectiveness",
+    "choropleth"
+  ],
+  "author": "Липецкая область",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Aleksey341/MVP-analitika.git"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -27,18 +45,19 @@
     "express-rate-limit": "^7.1.5",
     "express-session": "^1.18.2",
     "helmet": "^7.1.0",
+    "joi": "^17.11.0",
+    "jsonwebtoken": "^9.1.2",
     "moment": "^2.29.4",
     "multer": "^2.0.2",
     "pg": "^8.11.3",
+    "pdfkit": "^0.13.0",
     "uuid": "^9.0.1",
     "xlsx": "^0.18.5",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
-  },
-  "engines": { "node": ">=18.0.0" },
-  "keywords": ["reports", "dashboard", "postgresql", "amvera"],
-  "author": "alex1976",
-  "license": "MIT"
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^6.3.3"
+  }
 }
